@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SiS Cloud – Price Calculator</title>
+<style>
+  :root {
+    --primary: #1a56a0;
+    --primary-dark: #0f3d78;
+    --accent: #e8720c;
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --border: #d1dbe8;
+    --text: #1e2b3c;
+    --text-muted: #5a6a7e;
+    --green: #17a85a;
+    --red: #dc3545;
+    --yellow: #f5a623;
+    --shadow: 0 2px 8px rgba(26,86,160,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; overflow-x: auto; }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    color: #fff; padding: 8px 16px;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    position: sticky; top: 0; z-index: 200;
+    min-width: 900px;
+  }
+  .header-logo { font-size: 18px; font-weight: 800; letter-spacing: 1px; flex-shrink: 0; }
+  .header-logo span { color: var(--accent); }
+  .header-title { font-size: 12px; opacity: 0.9; line-height: 1.3; }
+
+  /* FORM BAR */
+  .form-bar {
+    background: var(--card);
+    border-bottom: 1.5px solid var(--border);
+    padding: 4px 10px;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 3px;
+    width: fit-content;
+    min-width: unset;
+  }
+  .form-bar-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .form-bar-field {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .form-bar-field.f-lg { width: 180px; }
+  .form-bar-field.f-md { width: 132px; }
+  .form-bar-field.f-sm { width: 126px; }
+  .form-bar-field.f-xs { width: 84px; }
+  .form-bar-field label { font-size: 8.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+  .form-bar-field input { font-size: 11px; padding: 5px 5px; width: 100%; }
+
+  /* LAYOUT — 2-column: catalog | right */
+  .app {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 10px;
+    padding: 10px;
+    align-items: start;
+    min-width: 900px;
+    height: calc(100vh - 90px);
+    overflow: hidden;
+  }
+
+  /* PANELS */
+  .panel { background: var(--card); border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; }
+  .panel-header { background: var(--primary); color: #fff; padding: 8px 14px; font-weight: 700; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+  .panel-body { padding: 10px 12px; }
+
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .form-group { display: flex; flex-direction: column; gap: 2px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  input, select, textarea {
+    border: 1.5px solid var(--border); border-radius: 5px; padding: 5px 8px;
+    font-size: 12px; color: var(--text); outline: none; background: #f8fafc;
+    transition: border-color 0.2s; width: 100%;
+  }
+  input:focus, select:focus { border-color: var(--primary); background: #fff; }
+
+  /* CATALOG */
+  .catalog-search { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .catalog-search input, .catalog-search select { width: 100%; }
+  .catalog-list { max-height: calc(100vh - 280px); min-height: 300px; overflow-y: auto; border: 1.5px solid var(--border); border-radius: 6px; }
+  .catalog-category { background: #e8f0fb; padding: 5px 10px; font-weight: 700; font-size: 10px; color: var(--primary); text-transform: uppercase; letter-spacing: 0.4px; position: sticky; top: 0; z-index: 1; }
+  .catalog-item {
+    display: flex; align-items: center; padding: 6px 10px; border-bottom: 1px solid #eef2f7;
+    gap: 6px; transition: background 0.12s;
+  }
+  .catalog-item:hover { background: #f0f7ff; }
+  .catalog-item-info { flex: 1; min-width: 0; }
+  .catalog-item-part { font-size: 9.5px; color: var(--text-muted); font-weight: 600; }
+  .catalog-item-name { font-size: 11px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .catalog-item-price { font-size: 11px; font-weight: 700; color: var(--primary); white-space: nowrap; }
+  .remarks-tip { display: none !important; } /* ซ่อน remarks ใน catalog เพื่อประหยัดพื้นที่ */
+  .btn-add {
+    background: var(--primary); color: #fff; border: none; border-radius: 4px;
+    padding: 3px 8px; font-size: 11px; cursor: pointer; font-weight: 700;
+    white-space: nowrap; flex-shrink: 0; transition: background 0.15s;
+  }
+  .btn-add:hover { background: var(--primary-dark); }
+
+  /* QUOTE TABLE */
+  .quote-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { background: #e8f0fb; padding: 7px 8px; text-align: left; font-size: 11px; font-weight: 700; color: var(--primary); white-space: nowrap; border-bottom: 2px solid var(--primary); }
+  tbody td { padding: 6px 8px; border-bottom: 1px solid #eef2f7; vertical-align: middle; font-size: 12px; }
+  tbody tr:hover { background: #f8fafc; }
+  tbody tr:last-child td { border-bottom: none; }
+  .td-num { text-align: right; }
+  input.qty-input { width: 55px; text-align: center; padding: 3px 5px; }
+  input.price-input { width: 85px; text-align: right; padding: 3px 5px; }
+  input.desc-input { width: 100%; min-width: 140px; }
+  .btn-remove { background: var(--red); color: #fff; border: none; border-radius: 4px; padding: 2px 7px; cursor: pointer; font-size: 11px; }
+  .btn-remove:hover { background: #b02a37; }
+  .empty-msg { text-align: center; padding: 32px; color: var(--text-muted); font-size: 12px; }
+
+  /* SUMMARY */
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .summary-card { background: #f0f6ff; border-radius: 7px; padding: 10px 12px; border: 1.5px solid #c8daf5; }
+  .summary-card.green { background: #edfaf3; border-color: #a3dfc0; }
+  .summary-card.orange { background: #fff7ed; border-color: #fbd9a8; }
+  .summary-label { font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+  .summary-value { font-size: 17px; font-weight: 800; color: var(--primary); margin-top: 3px; }
+  .summary-value.green { color: var(--green); }
+  .summary-value.orange { color: var(--accent); }
+
+  .totals-table { width: 100%; }
+  .totals-table tr td { padding: 4px 6px; font-size: 12px; }
+  .totals-table tr td:last-child { text-align: right; font-weight: 700; }
+  .totals-table .grand { font-size: 13px; color: var(--primary); border-top: 2px solid var(--primary); }
+  .totals-table .vat { color: var(--text-muted); }
+
+  /* DISCOUNT ROW */
+  .discount-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1.5px dashed var(--border); border-bottom: 1.5px dashed var(--border); margin: 8px 0; }
+  .discount-row label { white-space: nowrap; font-size: 12px; }
+  .discount-row input { width: 70px; }
+  .discount-note { font-size: 11px; color: var(--text-muted); }
+
+  /* MONTHS */
+  .months-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .months-row label { white-space: nowrap; font-weight: 600; font-size: 12px; }
+  .months-row input { width: 60px; }
+
+  /* BUTTONS */
+  .btn-primary {
+    background: var(--primary); color: #fff; border: none; border-radius: 8px;
+    padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: background 0.2s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-secondary {
+    background: #fff; color: var(--primary); border: 2px solid var(--primary); border-radius: 8px;
+    padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-secondary:hover { background: #e8f0fb; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+  /* GP INDICATOR */
+  .gp-bar { height: 8px; border-radius: 4px; background: #e0e7ef; margin-top: 6px; overflow: hidden; }
+  .gp-fill { height: 100%; border-radius: 4px; transition: width 0.4s; background: var(--green); }
+
+  /* PRINT */
+  @media print {
+    .no-print { display: none !important; }
+    body { background: #fff; overflow: visible !important; }
+    .app { display: none !important; }
+    .header { display: none !important; }
+    #printOverlay { display: block !important; position: static !important; background: none !important; padding: 0 !important; overflow: visible !important; }
+    #printArea { box-shadow: none !important; border-radius: 0 !important; padding: 10mm 12mm !important; }
+    #printArea .no-print { display: none !important; }
+    .qt-table { page-break-inside: auto; }
+    .qt-table tr { page-break-inside: avoid; }
+  }
+
+  /* RIGHT COLUMN */
+  .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+  /* TOOLTIP */
+  .remarks-tip { display: none !important; }
+
+  /* SCROLL */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #f0f4f8; }
+  ::-webkit-scrollbar-thumb { background: #c0d0e0; border-radius: 3px; }
+
+  /* ========== PRINT MODAL OVERLAY ========== */
+  #printOverlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.55);
+    overflow-y: auto;
+    padding: 24px 16px;
+  }
+  #printOverlay.active { display: block; }
+  #printArea {
+    font-family: 'TH SarabunPSK', 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    color: #000;
+    background: #fff;
+    padding: 20px 28px;
+    max-width: 1000px;
+    margin: 0 auto;
+    border-radius: 6px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+    position: relative;
+  }
+
+  /* Company header */
+  .qt-header-wrap { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 6px; }
+  .qt-logo { width: 60px; height: 60px; background: #1a56a0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; font-weight: 900; flex-shrink: 0; }
+  .qt-company-info { flex: 1; }
+  .qt-company { font-size: 13pt; font-weight: 800; color: #1a56a0; }
+  .qt-address { font-size: 9pt; color: #444; margin-top: 2px; }
+
+  /* QUOTATION title bar */
+  .qt-title {
+    font-size: 18pt; font-weight: 900; text-align: center;
+    letter-spacing: 4px; color: #fff;
+    background: #1a56a0;
+    padding: 5px 0; margin: 8px 0 10px;
+  }
+
+  /* Info + Cost Summary row */
+  .qt-top-section { display: flex; gap: 0; border: 1.5px solid #555; }
+  .qt-info-left { flex: 1; padding: 6px 10px; border-right: 1.5px solid #555; }
+  .qt-info-right { width: 280px; padding: 6px 10px; }
+  .qt-info-row { display: flex; align-items: baseline; gap: 4px; margin-bottom: 3px; font-size: 10pt; }
+  .qt-info-key { font-weight: 700; white-space: nowrap; min-width: 130px; }
+  .qt-info-val { border-bottom: 1px solid #aaa; flex: 1; min-width: 60px; padding-bottom: 1px; }
+  .qt-cost-table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  .qt-cost-table td { padding: 3px 6px; }
+  .qt-cost-table td:last-child { text-align: right; font-weight: 700; border-bottom: 1px solid #ddd; }
+  .qt-cost-table .cost-header { background: #1a56a0; color: #fff; font-weight: 700; font-size: 9pt; }
+  .qt-cost-table .cost-header td { padding: 3px 6px; }
+  .qt-cost-table .cost-header td:last-child { text-align: right; border-bottom: none; }
+
+  /* Thank you text */
+  .qt-thankyou { font-size: 9.5pt; margin: 8px 0 4px; }
+
+  /* Main items table */
+  .qt-table { width: 100%; border-collapse: collapse; margin: 0; }
+  .qt-table th {
+    background: #1a56a0; color: #fff;
+    padding: 5px 6px; font-size: 9pt; font-weight: 700;
+    text-align: center; border: 1px solid #888;
+  }
+  .qt-table td { padding: 4px 6px; border: 1px solid #bbb; font-size: 9.5pt; vertical-align: middle; }
+  .qt-table td.right { text-align: right; }
+  .qt-table td.center { text-align: center; }
+  .qt-table .subtotal-row td { background: #e8f0fb; font-weight: 700; }
+  .qt-table .total-row td { background: #f0f6ff; font-weight: 700; font-size: 10pt; }
+  .qt-table .vat-row td { background: #fff; color: #555; }
+  .qt-table .grand-row td { background: #1a56a0; color: #fff; font-weight: 900; font-size: 11pt; }
+
+  /* Signature section */
+  .qt-sign-section { display: flex; gap: 12px; margin-top: 14px; }
+  .qt-sign-box { flex: 1; border: 1px solid #888; padding: 10px 12px; font-size: 9.5pt; border-radius: 2px; }
+  .qt-sign-title { font-weight: 800; font-size: 10pt; margin-bottom: 6px; text-decoration: underline; }
+  .qt-sign-line { border-bottom: 1px solid #555; margin: 16px 0 3px; }
+
+  .tag { display: inline-block; background: #e8f0fb; color: var(--primary); border-radius: 4px; padding: 1px 5px; font-size: 10px; font-weight: 700; }
+  .tag.green { background: #edfaf3; color: var(--green); }
+
+  /* ── Toggle Switch ── */
+  .toggle-wrap { cursor: pointer; }
+  .toggle-track {
+    width: 44px; height: 24px; background: #4a7fc1; border-radius: 12px;
+    position: relative; transition: background 0.25s;
+  }
+  .toggle-track.partner { background: var(--accent); }
+  .toggle-thumb {
+    position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px; background: #fff;
+    border-radius: 50%; transition: left 0.25s; box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+  .toggle-track.partner .toggle-thumb { left: 23px; }
+
+  /* ── Partner Mode: hide internal elements ── */
+  body.partner-mode .internal-only { display: none !important; }
+
+  /* hide cost columns in quote table (th/td position 7,8 = index 7,8) */
+  body.partner-mode #quoteTable th:nth-child(7),
+  body.partner-mode #quoteTable th:nth-child(8),
+  body.partner-mode #quoteTable td:nth-child(7),
+  body.partner-mode #quoteTable td:nth-child(8) { display: none !important; }
+
+  /* hide cost columns in print table */
+  body.partner-mode .qt-table th:nth-child(8),
+  body.partner-mode .qt-table th:nth-child(9),
+  body.partner-mode .qt-table td:nth-child(8),
+  body.partner-mode .qt-table td:nth-child(9) { display: none !important; }
+
+  /* partner mode banner */
+  .partner-banner {
+    display: none; background: var(--accent); color: #fff;
+    text-align: center; padding: 6px; font-weight: 700; font-size: 13px;
+  }
+  body.partner-mode .partner-banner { display: block; }
+</style>
+</head>
+<body class="partner-mode">
+
+<div class="header no-print">
+  <div>
+    <div style="font-weight:700;font-size:15px;">Cloud Price Calculator</div>
+    <div class="header-title">SiS Distribution (Thailand) Public Co., Ltd.</div>
+  </div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:14px;">
+    <span style="font-size:11px;opacity:0.7;">Last Updated: May 7, 2026</span>
+  </div>
+</div>
+
+
+<!-- FORM BAR -->
+<div class="form-bar no-print">
+  <div class="form-bar-row">
+    <div class="form-bar-field f-lg">
+      <label>Partner / Reseller</label>
+      <input id="partnerCompany" type="text" placeholder="บริษัท Partner">
+    </div>
+    <div class="form-bar-field f-lg">
+      <label>Customer Name</label>
+      <input id="customerName" type="text" placeholder="ชื่อลูกค้า">
+    </div>
+    <div class="form-bar-field f-lg">
+      <label>Project Name</label>
+      <input id="projectName" type="text" placeholder="ชื่อโปรเจค">
+    </div>
+    <div class="form-bar-field f-md">
+      <label>Attention</label>
+      <input id="attention" type="text" placeholder="-">
+    </div>
+    <div class="form-bar-field f-md">
+      <label>Telephone</label>
+      <input id="telephone" type="text" placeholder="-">
+    </div>
+  </div>
+  <div class="form-bar-row" style="width:fit-content">
+    <div class="form-bar-field f-sm">
+      <label>Date</label>
+      <input id="quoteDate" type="date">
+    </div>
+    <div class="form-bar-field f-xs">
+      <label>Validity (Days)</label>
+      <input id="validity" type="number" value="30">
+    </div>
+    <div class="form-bar-field f-xs">
+      <label>Revision</label>
+      <input id="revision" type="number" value="1">
+    </div>
+    <div class="form-bar-field f-md">
+      <label>Tenant ID (Renew)</label>
+      <input id="tenantId" type="text" placeholder="-">
+    </div>
+    <div class="form-bar-field f-xs">
+      <label>Terms (Days)</label>
+      <input id="terms" type="text" placeholder="-">
+    </div>
+  </div>
+</div>
+
+<div class="app no-print">
+
+  <!-- COL 1: Product Catalog -->
+  <div class="panel" style="align-self:start">
+    <div class="panel-header">🛒 Catalog สินค้า</div>
+    <div class="panel-body">
+      <div class="catalog-search">
+        <input type="text" id="searchInput" placeholder="🔍 ค้นหา Part No. หรือชื่อสินค้า..." oninput="renderCatalog()">
+        <select id="catFilter" onchange="renderCatalog()">
+          <option value="">— ทุกหมวด —</option>
+        </select>
+      </div>
+      <div class="catalog-list" id="catalogList"></div>
+    </div>
+  </div>
+
+  <!-- COL 3: Quote + Summary -->
+  <div class="right-col">
+
+    <!-- Quote Table -->
+    <div class="panel">
+      <div class="panel-header">📄 รายการใบเสนอราคา</div>
+      <div class="panel-body">
+        <div class="months-row">
+          <label>ระยะสัญญา (เดือน):</label>
+          <input type="number" id="contractMonths" value="12" min="1" max="60" oninput="recalc()">
+          <span style="font-size:11px;color:var(--text-muted)">เดือน</span>
+        </div>
+        <div class="quote-wrap">
+          <table id="quoteTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Part No.</th>
+                <th>Description</th>
+                <th style="text-align:center">Qty</th>
+                <th style="text-align:right">Price/Month (THB)</th>
+                <th style="text-align:right">Extended/Month</th>
+                <th style="text-align:right" class="internal-only">Cost/Month</th>
+                <th style="text-align:right" class="internal-only">Ext. Cost/Month</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="quoteBody">
+              <tr><td colspan="9" class="empty-msg">เพิ่มสินค้าจาก Catalog ด้านซ้าย</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="panel">
+      <div class="panel-header">💰 สรุปราคา</div>
+      <div class="panel-body">
+        <div class="summary-grid" style="margin-bottom:16px;">
+          <div class="summary-card" style="grid-column:1/-1">
+            <div class="summary-label">Price / Month (ราคาขาย หลังลด)</div>
+            <div class="summary-value" id="sumPriceMonth">฿0</div>
+          </div>
+          <div class="summary-card internal-only">
+            <div class="summary-label">Cost/Month (ต้นทุน)</div>
+            <div class="summary-value" id="sumCostMonth">฿0</div>
+          </div>
+          <div class="summary-card green internal-only">
+            <div class="summary-label">Profit/Month (กำไร)</div>
+            <div class="summary-value green" id="sumProfitMonth">฿0</div>
+          </div>
+          <div class="summary-card orange internal-only" style="grid-column:1/-1">
+            <div class="summary-label">GP (%)</div>
+            <div class="summary-value orange" id="sumGP">0%</div>
+            <div class="gp-bar"><div class="gp-fill" id="gpBar" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <div class="discount-row">
+          <label>Discount:</label>
+          <input type="number" id="discountPct" value="0" min="0" max="100" step="0.1" oninput="recalc()">
+          <span>%</span>
+          <span class="discount-note" id="discountNote"></span>
+        </div>
+
+        <table class="totals-table">
+          <tr>
+            <td>Price/Month (ก่อนลด)</td>
+            <td id="t_priceMonth">฿0</td>
+          </tr>
+          <tr style="color:var(--red)">
+            <td id="t_discLabel">Discount (0%)</td>
+            <td id="t_discount">-฿0</td>
+          </tr>
+          <tr>
+            <td><strong>Total Price/Month (หลังลด)</strong></td>
+            <td><strong id="t_totalMonth">฿0</strong></td>
+          </tr>
+          <tr>
+            <td>จำนวนเดือน</td>
+            <td id="t_months">12 เดือน</td>
+          </tr>
+          <tr>
+            <td><strong>Total Contract (THB)</strong></td>
+            <td><strong id="t_totalContract">฿0</strong></td>
+          </tr>
+          <tr class="vat">
+            <td>VAT 7%</td>
+            <td id="t_vat">฿0</td>
+          </tr>
+          <tr class="grand">
+            <td><strong>Grand Total (รวม VAT)</strong></td>
+            <td><strong id="t_grandTotal">฿0</strong></td>
+          </tr>
+        </table>
+
+        <div class="actions">
+          <button class="btn-primary" onclick="showPrint()">🖨️ พิมพ์ใบเสนอราคา</button>
+          <button class="btn-secondary" onclick="clearAll()">🗑️ ล้างข้อมูล</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PRINT MODAL OVERLAY -->
+<div id="printOverlay">
+<div id="printArea">
+  <!-- Company Header -->
+  <div class="qt-header-wrap">
+    <div class="qt-logo">SiS</div>
+    <div class="qt-company-info">
+      <div class="qt-company">SiS Distribution (Thailand) Public Co., Ltd.</div>
+      <div class="qt-address">9 Pakin Building, 9th Floor, Room No.901, Ratchadaphisek Road, Din Daeng, Bangkok 10400.</div>
+      <div class="qt-address">E-mail : Tanapol_pr@sisthai.com &nbsp;/&nbsp; Tel : 080-290-1031 &nbsp;/&nbsp; Contact : Tanapol Promsorn</div>
+    </div>
+  </div>
+
+  <!-- QUOTATION Title -->
+  <div class="qt-title">QUOTATION</div>
+
+  <!-- Top Info Section: Customer Info LEFT | Cost Summary RIGHT -->
+  <div class="qt-top-section">
+    <div class="qt-info-left" id="qtInfoLeft"></div>
+    <div class="qt-info-right internal-only">
+      <table class="qt-cost-table">
+        <tr class="cost-header"><td>Summary</td><td id="qt_cs_months"></td></tr>
+        <tr><td>Costs / Month (THB)</td><td id="qt_cs_cost_month"></td></tr>
+        <tr><td>Total Costs (THB)</td><td id="qt_cs_total_cost"></td></tr>
+        <tr><td>Profit / Month (THB)</td><td id="qt_cs_profit_month"></td></tr>
+        <tr><td>Total Profit (THB)</td><td id="qt_cs_total_profit"></td></tr>
+        <tr><td>GP (%)</td><td id="qt_cs_gp"></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Thank you text -->
+  <div class="qt-thankyou">Thank you for your inquiry of SIS's products and services. We are pleased to offer price quotation per your request :</div>
+
+  <!-- Items Table -->
+  <table class="qt-table">
+    <thead>
+      <tr>
+        <th style="width:32px">Item</th>
+        <th style="width:130px">Part No.</th>
+        <th>Description</th>
+        <th style="width:40px">Quantity</th>
+        <th style="width:48px">Unit</th>
+        <th style="width:95px">Price / Unit<br>(THB/Month)</th>
+        <th style="width:95px">Total<br>(THB/Month)</th>
+        <th style="width:95px">Unit Cost<br>/Month (THB)</th>
+        <th style="width:105px">Extended Cost<br>/Month (THB)</th>
+      </tr>
+    </thead>
+    <tbody id="qtBody"></tbody>
+  </table>
+
+  <!-- Signature Section -->
+  <div class="qt-sign-section">
+    <div class="qt-sign-box" style="flex:2">
+      <div class="qt-sign-title">FOR CUSTOMER SIGN CONFIRM</div>
+      <div style="font-size:9pt;">I / We accept the price and terms and conditions of this quotation and will treat this document as our official purchase order.</div>
+      <div class="qt-sign-line"></div>
+      <div style="font-size:9pt;">_______________________ : Company __________________________ Date : __________________</div>
+      <div style="font-size:9pt;margin-top:4px;">(Signature) &nbsp;&nbsp;&nbsp; (________________________________)</div>
+    </div>
+    <div class="qt-sign-box" style="flex:1">
+      <div class="qt-sign-title">Create By</div>
+      <div>Tanapol Promsorn</div>
+      <div style="margin-top:4px;">Tel. 080-290-1031</div>
+      <div class="qt-sign-line"></div>
+      <div style="font-size:9pt;">Tanapol Promsorn</div>
+    </div>
+  </div>
+
+  <!-- Screen-only buttons -->
+  <div style="margin-top:16px;display:flex;gap:10px;" class="no-print">
+    <button onclick="window.print()" class="btn-primary">🖨️ Print / Save PDF</button>
+    <button onclick="hidePrint()" class="btn-secondary">✕ ปิด</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ===================== PRODUCT DATA =====================
+const CATALOG = [
+  // Platform: Flex Cloud IaaS (Virtuozzo)
+  { cat: 'Flex Cloud IaaS (Virtuozzo)', part: 'SCD-VTZ-I-VM', name: 'VTZ: Virtual Machine', price: 120, cost: 95.92, remarks: 'Adjust price' },
+  { cat: 'Flex Cloud IaaS (Virtuozzo)', part: 'SCD-VTZ-I-VCPU', name: 'VTZ: vCPU', price: 157.58, cost: 125 },
+  { cat: 'Flex Cloud IaaS (Virtuozzo)', part: 'SCD-VTZ-I-RAM', name: 'VTZ: Memory per GB', price: 39.4, cost: 30 },
+  { cat: 'Flex Cloud IaaS (Virtuozzo)', part: 'SCD-VTZ-I-AFS', name: 'VTZ: All-Flash NVMe Storage per GB', price: 2.38, cost: 1.6 },
+  { cat: 'Flex Cloud IaaS (Virtuozzo)', part: 'SCD-VTZ-I-HBS', name: 'VTZ: Hybrid Storage per GB', price: 2.12, cost: 0.9 },
+  { cat: 'Flex Cloud IaaS (Virtuozzo)', part: 'SCD-VTZ-I-VPC', name: 'VTZ: Virtual Private Cloud per Site', price: 193, cost: 153.85, remarks: 'Min. 1 VPC per Site (ETIX or IDC)' },
+
+  // Platform: Essential Cloud IaaS (Nutanix)
+  { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-NTX-I-VM', name: 'NTX: Virtual Machine', price: 1, cost: 1 },
+  { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-NTX-I-VCPU', name: 'NTX: vCPU', price: 146.82, cost: 110.11 },
+  { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-NTX-I-RAM', name: 'NTX: Memory per GB', price: 37.42, cost: 28.06 },
+  { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-NTX-I-HBS', name: 'NTX: Hybrid Storage per GB', price: 1.22, cost: 0.91, remarks: 'เลือกอย่างใดอย่างหนึ่ง' },
+  { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-NTX-I-HBS-O', name: 'NTX: Hybrid Storage per GB w/ 7 Offsite Snapshots', price: 2.12, cost: 1.59, remarks: 'เลือกอย่างใดอย่างหนึ่ง' },
+  { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-NTX-I-VPC', name: 'NTX: Virtual Private Cloud per Site', price: 193, cost: 153.85, remarks: 'Min. 1 VPC per Site (ETIX or IDC)' },
+
+  // Essential Cloud DRaaS (Nutanix)
+  { cat: 'Essential Cloud DRaaS (Nutanix)', part: 'SCD-NTX-DR-VM', name: 'NTX-DR: Virtual Machine', price: 1, cost: 1 },
+  { cat: 'Essential Cloud DRaaS (Nutanix)', part: 'SCD-NTX-DR-VCPU', name: 'NTX-DR: vCPU', price: 87.14, cost: 65.35 },
+  { cat: 'Essential Cloud DRaaS (Nutanix)', part: 'SCD-NTX-DR-RAM', name: 'NTX-DR: Memory per GB', price: 18.16, cost: 13.61 },
+  { cat: 'Essential Cloud DRaaS (Nutanix)', part: 'SCD-NTX-DR-HBS', name: 'NTX-DR: Hybrid Storage per GB', price: 1.38, cost: 1.02 },
+  { cat: 'Essential Cloud DRaaS (Nutanix)', part: 'SCD-NTX-DR-VPC', name: 'NTX-DR: Virtual Private Cloud per Site', price: 193, cost: 153.85, remarks: 'Min. 1 VPC per Site (ETIX or IDC)' },
+
+  // Enterprise Cloud DRaaS (VMWare)
+  { cat: 'Enterprise Cloud DRaaS (VMWare)', part: 'SCD-VMW-DR-VM', name: 'VMW-DR: Virtual Machine', price: 302.48, cost: 272.22 },
+  { cat: 'Enterprise Cloud DRaaS (VMWare)', part: 'SCD-VMW-DR-VCPU', name: 'VMW-DR: vCPU', price: 25.48, cost: 20.37 },
+  { cat: 'Enterprise Cloud DRaaS (VMWare)', part: 'SCD-VMW-DR-RAM', name: 'VMW-DR: Memory per GB', price: 28.27, cost: 22.6 },
+  { cat: 'Enterprise Cloud DRaaS (VMWare)', part: 'SCD-VMW-DR-AFS', name: 'VMW-DR: All-Flash Storage per GB', price: 2.84, cost: 2.27 },
+  { cat: 'Enterprise Cloud DRaaS (VMWare)', part: 'SCD-VMW-DR-HBS', name: 'VMW-DR: Hybrid Storage per GB', price: 0.93, cost: 0.73 },
+
+  // Virtual Private Server (VPS) — Disk
+  { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-T1', name: 'VPS T1-2vCPU, 2GB RAM, Disk 100GB 1IP', price: 820, cost: 682.35 },
+  { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-T2', name: 'VPS T2-2vCPU, 4GB RAM, Disk 100GB 1IP', price: 890, cost: 742.35 },
+  { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-T3', name: 'VPS T3-2vCPU, 8GB RAM, Disk 100GB 1IP', price: 1030, cost: 862.35 },
+  { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-T4', name: 'VPS T4-4vCPU, 8GB RAM, Disk 100GB 1IP', price: 1330, cost: 1112.35 },
+  { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-T5', name: 'VPS T5-4vCPU, 16GB RAM, Disk 100GB 1IP', price: 1610, cost: 1352.35 },
+  // Virtual Private Server (VPS) — NVME
+  { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-NVME-T1', name: 'VPS T1-2vCPU, 2GB RAM, NVME 100GB 1IP', price: 850, cost: 710.35 },
+  { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-NVME-T2', name: 'VPS T2-2vCPU, 4GB RAM, NVME 100GB 1IP', price: 920, cost: 770.35 },
+  { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-NVME-T3', name: 'VPS T3-2vCPU, 8GB RAM, NVME 100GB 1IP', price: 1060, cost: 890.35 },
+  { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-NVME-T4', name: 'VPS T4-4vCPU, 8GB RAM, NVME 100GB 1IP', price: 1360, cost: 1140.35 },
+  { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-NVME-T5', name: 'VPS T5-4vCPU, 16GB RAM, NVME 100GB 1IP', price: 1650, cost: 1380.35 },
+  // Virtual Private Server (VPS) — Add-ons
+  { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-OS-WIN', name: 'VPS Microsoft Windows Server Data Center Edition per vCPU', price: 138.16, cost: 131.25, remarks: 'ต้องเลือกเวอร์ชั่นของ OS ที่ลูกค้าต้องการด้วย' },
+  { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-HBS', name: 'VPS Addon: Hybrid Storage per GB', price: 1.44, cost: 1.21, remarks: 'เลือกเป็นชนิดเดียวกับ T-Shirt' },
+  { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-NVME', name: 'VPS Addon NVME per GB', price: 1.77, cost: 1.49, remarks: 'เลือกเป็นชนิดเดียวกับ T-Shirt' },
+
+  // Connectivity
+  { cat: 'Connectivity (Internet BW, IP Address)', part: 'SCD-PUB-IP', name: 'Dedicated Public IP Address', price: 192.32, cost: 153.85, remarks: 'Min. 1 IP address per Tenant' },
+  { cat: 'Connectivity (Internet BW, IP Address)', part: 'SCD-BW-DOM-M', name: 'Add-on Shared Domestic Internet Bandwidth per Mbps', price: 41.68, cost: 33.33 },
+  { cat: 'Connectivity (Internet BW, IP Address)', part: 'SCD-BW-INT-M', name: 'Add-on Shared International Internet Bandwidth per Mbps', price: 112.19, cost: 89.74 },
+
+  // Security
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-CS-NGAV', name: 'CrowdStrike MSSP Protect (NGAV) per VM', price: 105.8, cost: 95.21, remarks: '(VM required internet access)' },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-CS-EDR', name: 'CrowdStrike MSSP Defend (NGAV, EDR, Threat Intel) per VM', price: 206.08, cost: 185.46, remarks: '(VM required internet access)' },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-CS-ADV', name: 'CrowdStrike MSSP Adv Defend (NGAV, EDR, Threat Intel & Hunting) per VM', price: 262.49, cost: 236.23, remarks: '(VM required internet access)' },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-HS-VM01', name: 'HillStone-VM01 vFirewall (SSL VPN max 5 concurrent) per Tenant', price: 1130, cost: 1008.19, remarks: 'เลือกอย่างใดอย่างหนึ่ง FG หรือ HS' },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-FG-VM01', name: 'FortiGate-VM01 (1vCPU, 2GB RAM, Disk 32GB) with UTM', price: 4245.54, cost: 3820.98 },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-FG-VM02', name: 'FortiGate-VM02 (2vCPU, 4GB RAM, Disk 32GB) with UTM', price: 6396.77, cost: 5757.08 },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-FG-VM04', name: 'FortiGate-VM04 (4vCPU, 8GB RAM, Disk 32GB) with UTM', price: 12823.25, cost: 11540.91 },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-FG-VM08', name: 'FortiGate-VM08 (8vCPU, 16GB RAM, Disk 32GB) with UTM', price: 25408.84, cost: 22867.94 },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-FW-VM01', name: 'FortiWeb-VM01 (1vCPU, 8GB RAM, Disk 40GB) with Standard Services', price: 9032.44, cost: 8129.19 },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-FW-VM02', name: 'FortiWeb-VM02 (2vCPU, 8GB RAM, Disk 40GB) with Standard Services', price: 16424.02, cost: 14781.6 },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-FW-VM04', name: 'FortiWeb-VM04 (4vCPU, 16GB RAM, Disk 40GB) with Standard Services', price: 38867.34, cost: 34980.59 },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-FW-VM08', name: 'FortiWeb-VM08 (8vCPU, 32GB RAM, Disk 40GB) with Standard Services', price: 68777.9, cost: 61900.11 },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-FG-CM-VM01', name: 'FortiGate-VM01 with FortiGate Cloud Management (1vCPU, 2GB)', price: 5130, cost: 4205.66 },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-FG-CM-VM02', name: 'FortiGate-VM02 with FortiGate Cloud Management (2vCPU, 4GB)', price: 7730, cost: 6333.9 },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-FG-AZ100GB', name: 'FortiAnalyzer and Fortiguard IOC - Log Capacity per 100GB', price: 296.3, cost: 266.67 },
+  { cat: 'Security (Antivirus, Firewall, Vulnerability Scanner)', part: 'SCD-NS-VUL-SCAN', name: 'Nessus Vulnerability Scanner Monthly Reporting', price: 1049.39, cost: 944.44 },
+
+  // OS & Software
+  { cat: 'Operating Systems and Software', part: 'SCD-MS-WIN-SVR-DC', name: 'Microsoft Windows Server Data Center Edition per vCPU', price: 138.16, cost: 131.25 },
+  { cat: 'Operating Systems and Software', part: 'SCD-MS-SQL-STD-U', name: 'SQL Server Standard Edition per user', price: 843.16, cost: 801 },
+  { cat: 'Operating Systems and Software', part: 'SCD-MS-SQL-STD', name: 'SQL Server Standard Edition per 2 vCPU', price: 7798.95, cost: 7409 },
+  { cat: 'Operating Systems and Software', part: 'SCD-MS-SQL-ENT', name: 'SQL Server Enterprise Edition per 2 vCPU', price: 29363.16, cost: 27895 },
+  { cat: 'Operating Systems and Software', part: 'SCD-MS-SQL-WEB', name: 'SQL Server Web Edition per 2 vCPU', price: 488.43, cost: 464 },
+  { cat: 'Operating Systems and Software', part: 'SCD-MS-RDS-SAL-U', name: 'Windows Remote Desktop Services SAL (per user)', price: 361.06, cost: 343 },
+  { cat: 'Operating Systems and Software', part: 'SCD-MS-RDS-SAL-D', name: 'Windows Remote Desktop Services SAL (per device)', price: 361.06, cost: 343 },
+  { cat: 'Operating Systems and Software', part: 'SCD-SUSE-ENT-VCPU', name: 'SUSE Linux Enterprise Server per vCPU', price: 153.09, cost: 137.78 },
+  { cat: 'Operating Systems and Software', part: 'SCD-SUSE-ENT-VM', name: 'SUSE Linux Enterprise Server per VM', price: 3466.67, cost: 3120 },
+  { cat: 'Operating Systems and Software', part: 'SCD-SUSE-SAP-VCPU', name: 'SUSE Linux Enterprise Server for SAP per vCPU', price: 269.15, cost: 242.22 },
+  { cat: 'Operating Systems and Software', part: 'SCD-SUSE-SAP-VM', name: 'SUSE Linux Enterprise Server for SAP per VM', price: 6246.93, cost: 5622.22 },
+
+  // Storage Services
+  { cat: 'Storage Services', part: 'SCD-DD-TB', name: 'DataDomain (DDaaS) per TB (Back-end)', price: 2720.62, cost: 2176.49 },
+  { cat: 'Storage Services', part: 'SCD-OBJ-TB', name: 'Object Storage per TB', price: 623.6, cost: 498.87 },
+
+  // Monitoring & Alert
+  { cat: 'Monitoring & Alert & Report', part: 'SCD-VMW-VRL-LOG', name: 'vRealize Log Insight (90 days log retention for NSX)', price: 991.99, cost: 793.59 },
+  { cat: 'Monitoring & Alert & Report', part: 'SCD-PRTG-100S', name: 'PRTG Monthly Reporting & Alert (Email, SMS, 100 Sensors)', price: 4214.75, cost: 3371.79 },
+  { cat: 'Monitoring & Alert & Report', part: 'SCD-NTX-B-REPORT', name: 'Monthly Backup Report per Tenant', price: 588.24, cost: 500 },
+
+  // Backup as a Services
+  { cat: 'Backup as a Services', part: 'SCD-VEM-STD', name: 'Veeam Backup Standard per VM', price: 151.86, cost: 136.67 },
+  { cat: 'Backup as a Services', part: 'SCD-VEM-ENT', name: 'Veeam Backup Enterprise per VM', price: 271.62, cost: 244.44 },
+  { cat: 'Backup as a Services', part: 'SCD-VEM-ENT-P', name: 'Veeam Backup Enterprise Plus per VM', price: 332.1, cost: 298.89 },
+  { cat: 'Backup as a Services', part: 'SCD-VEM-CC-VM', name: 'Veeam Cloud Connect Backup per VM', price: 151.86, cost: 136.67 },
+  { cat: 'Backup as a Services', part: 'SCD-VEM-CC-SVR', name: 'Veeam Cloud Connect Backup per Server', price: 211.12, cost: 190 },
+  { cat: 'Backup as a Services', part: 'SCD-VEM-CC-WS', name: 'Veeam Cloud Connect Backup per Workstation', price: 91.37, cost: 82.22 },
+  { cat: 'Backup as a Services', part: 'SCD-VEM-ONE', name: 'Veeam ONE per VM (monitoring and reporting)', price: 60.5, cost: 54.44 },
+  { cat: 'Backup as a Services', part: 'SCD-VEM-AHV', name: 'Veeam Availability for Nutanix AHV per VM', price: 332.1, cost: 298.89 },
+  { cat: 'Backup as a Services', part: 'SCD-VEM-AGN-S', name: 'Veeam Agent for Server per Server', price: 332.1, cost: 298.89 },
+  { cat: 'Backup as a Services', part: 'SCD-VEM-AGN-W', name: 'Veeam Agent for Workstation per Workstation', price: 120.99, cost: 108.89 },
+  { cat: 'Backup as a Services', part: 'SCD-VEM-CC-GW', name: 'Dedicated Veeam Cloud Connect Gateway', price: 2103.05, cost: 1682.44 },
+  { cat: 'Backup as a Services', part: 'SCD-BKS-TB', name: 'Backup Storage per TB', price: 492.32, cost: 393.85 },
+
+  // MagicBox
+  { cat: 'MagicBox (Secure File Sharing)', part: 'SCD-MGB-50', name: 'MagicBox base (1-50 users) 4vCPU, 8GB, 100GB OS', price: 2804.49, cost: 2243.59 },
+  { cat: 'MagicBox (Secure File Sharing)', part: 'SCD-MGB-100', name: 'MagicBox base (51-100 users) 4vCPU, 16GB, 100GB OS', price: 3814.12, cost: 3051.28 },
+  { cat: 'MagicBox (Secure File Sharing)', part: 'SCD-MGB-500', name: 'MagicBox base (101-500 users) 6vCPU, 24GB, 200GB OS', price: 5592.95, cost: 4474.36 },
+  { cat: 'MagicBox (Secure File Sharing)', part: 'SCD-MGB-1000', name: 'MagicBox base (501-1000 users) 8vCPU, 32GB, 500GB OS', price: 8012.83, cost: 6410.26 },
+  { cat: 'MagicBox (Secure File Sharing)', part: 'SCD-MGB-OFFICE', name: 'OnlyOffice Docs Base Installation per Server', price: 1931.58, cost: 1545.25 },
+  { cat: 'MagicBox (Secure File Sharing)', part: 'SCD-MGB-HBS-GB', name: 'MagicBox Data Storage per GB', price: 1.1, cost: 0.87 },
+
+  // WASABI
+  { cat: 'WASABI', part: 'WSB-HCS-TB', name: 'Wasabi Hot Cloud Storage per TB', price: 258.83, cost: 220 },
+  { cat: 'WASABI', part: 'WSB-WCN-TB', name: 'Wasabi Cloud NAS per TB', price: 341.18, cost: 290 },
+  { cat: 'WASABI', part: 'WSB-WSC-TB', name: 'Wasabi Surveillance Cloud per TB', price: 420, cost: 357 },
+
+  // Private Cloud
+  { cat: 'Private Cloud', part: 'SCD-PRIVATE-FR', name: 'Full Rack Colocation', price: 52941.18, cost: 45000, remarks: 'สำหรับโปรเจค dedicate เท่านั้น' },
+  { cat: 'Private Cloud', part: 'SCD-PRIVATE-HR', name: 'Half Rack Colocation', price: 27058.83, cost: 23000, remarks: 'สำหรับโปรเจค dedicate เท่านั้น' },
+  { cat: 'Private Cloud', part: 'SCD-PRIVATE-1U', name: '1U Rack Colocation', price: 2058.83, cost: 1750, remarks: 'สำหรับโปรเจค dedicate เท่านั้น' },
+  { cat: 'Private Cloud', part: 'SCD-PRIVATE-PORT', name: '10G/1G SFP+ Port (no transceiver module)', price: 600, cost: 510, remarks: 'สำหรับโปรเจค dedicate เท่านั้น' },
+  { cat: 'Private Cloud', part: 'SCD-PRIVATE-M-10G', name: '10GBase-SR SFP+ transceiver module', price: 617.65, cost: 525, remarks: 'สำหรับโปรเจค dedicate เท่านั้น' },
+  { cat: 'Private Cloud', part: 'SCD-PRIVATE-M-1G', name: '1GBase-T SFP transceiver module', price: 309.42, cost: 263, remarks: 'สำหรับโปรเจค dedicate เท่านั้น' },
+
+];
+
+// ===================== STATE =====================
+let quoteItems = [];
+
+// ===================== INIT =====================
+document.addEventListener('DOMContentLoaded', () => {
+  // Close modal when clicking backdrop
+  document.getElementById('printOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('printOverlay')) hidePrint();
+  });
+
+  // Set today's date
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('quoteDate').value = today;
+
+  // Populate category filter
+  const cats = [...new Set(CATALOG.map(p => p.cat))];
+  const sel = document.getElementById('catFilter');
+  cats.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    sel.appendChild(o);
+  });
+
+  renderCatalog();
+  recalc();
+});
+
+// ===================== CATALOG RENDER =====================
+function renderCatalog() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const cat = document.getElementById('catFilter').value;
+  const container = document.getElementById('catalogList');
+  container.innerHTML = '';
+
+  let filtered = CATALOG.filter(p =>
+    (!cat || p.cat === cat) &&
+    (!q || p.part.toLowerCase().includes(q) || p.name.toLowerCase().includes(q))
+  );
+
+  if (!filtered.length) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:#999">ไม่พบสินค้า</div>';
+    return;
+  }
+
+  // Group by category
+  const groups = {};
+  filtered.forEach(p => {
+    if (!groups[p.cat]) groups[p.cat] = [];
+    groups[p.cat].push(p);
+  });
+
+  Object.entries(groups).forEach(([catName, items]) => {
+    const catDiv = document.createElement('div');
+    catDiv.className = 'catalog-category';
+    catDiv.textContent = catName;
+    container.appendChild(catDiv);
+
+    items.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'catalog-item';
+      div.innerHTML = `
+        <div class="catalog-item-info">
+          <div class="catalog-item-part">${p.part}</div>
+          <div class="catalog-item-name" title="${p.name}">${p.name}</div>
+          ${p.remarks ? `<div class="remarks-tip">⚠ ${p.remarks}</div>` : ''}
+        </div>
+        <div class="catalog-item-price" style="display:none"></div>
+        <button class="btn-add" onclick="addItem('${p.part}')">+ เพิ่ม</button>
+      `;
+      container.appendChild(div);
+    });
+  });
+}
+
+// ===================== QUOTE =====================
+function addItem(partNo) {
+  const product = CATALOG.find(p => p.part === partNo);
+  if (!product) return;
+  // Check if already exists
+  const existing = quoteItems.find(i => i.part === partNo);
+  if (existing) {
+    existing.qty += 1;
+  } else {
+    quoteItems.push({ part: product.part, name: product.name, qty: 1, price: product.price, cost: product.cost });
+  }
+  renderQuote();
+  recalc();
+}
+
+function removeItem(idx) {
+  quoteItems.splice(idx, 1);
+  renderQuote();
+  recalc();
+}
+
+function renderQuote() {
+  const tbody = document.getElementById('quoteBody');
+  if (!quoteItems.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-msg">เพิ่มสินค้าจาก Catalog ด้านซ้าย</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  quoteItems.forEach((item, idx) => {
+    const extPrice = item.qty * item.price;
+    const extCost = item.qty * item.cost;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${idx + 1}</td>
+      <td style="white-space:nowrap;font-size:11px;font-weight:600;color:var(--primary)">${item.part}</td>
+      <td><input class="desc-input" value="${item.name}" oninput="updateName(${idx}, this.value)"></td>
+      <td class="td-num"><input class="qty-input" type="number" value="${item.qty}" min="0" oninput="updateQty(${idx}, this.value)"></td>
+      <td class="td-num"><input class="price-input" type="number" value="${item.price}" step="0.01" oninput="updatePrice(${idx}, this.value)"></td>
+      <td class="td-num" style="font-weight:700">฿${fmt(extPrice)}</td>
+      <td class="td-num" style="color:var(--text-muted)">฿${fmt(item.cost)}</td>
+      <td class="td-num" style="color:var(--text-muted)">฿${fmt(extCost)}</td>
+      <td><button class="btn-remove" onclick="removeItem(${idx})">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateQty(idx, val) {
+  quoteItems[idx].qty = parseFloat(val) || 0;
+  renderQuote();
+  recalc();
+}
+function updatePrice(idx, val) {
+  quoteItems[idx].price = parseFloat(val) || 0;
+  renderQuote();
+  recalc();
+}
+function updateName(idx, val) {
+  quoteItems[idx].name = val;
+}
+
+// ===================== RECALC =====================
+function recalc() {
+  const months = parseInt(document.getElementById('contractMonths').value) || 12;
+  const discPct = parseFloat(document.getElementById('discountPct').value) || 0;
+
+  let totalPrice = 0, totalCost = 0;
+  quoteItems.forEach(item => {
+    totalPrice += item.qty * item.price;
+    totalCost += item.qty * item.cost;
+  });
+
+  const discAmt = totalPrice * discPct / 100;
+  const priceAfterDisc = totalPrice - discAmt;
+  const totalContract = priceAfterDisc * months;
+  const vat = totalContract * 0.07;
+  const grandTotal = totalContract + vat;
+
+  const profitMonth = priceAfterDisc - totalCost;
+  const gp = priceAfterDisc > 0 ? (profitMonth / priceAfterDisc * 100) : 0;
+
+  // Summary cards
+  document.getElementById('sumPriceMonth').textContent = '฿' + fmt(priceAfterDisc);
+  document.getElementById('sumCostMonth').textContent = '฿' + fmt(totalCost);
+  document.getElementById('sumProfitMonth').textContent = '฿' + fmt(profitMonth);
+  document.getElementById('sumGP').textContent = gp.toFixed(1) + '%';
+  document.getElementById('gpBar').style.width = Math.min(Math.max(gp, 0), 100) + '%';
+  const gpBar = document.getElementById('gpBar');
+  gpBar.style.background = gp >= 20 ? '#17a85a' : gp >= 10 ? '#f5a623' : '#dc3545';
+
+  // Totals table
+  document.getElementById('t_priceMonth').textContent = '฿' + fmt(totalPrice);
+  document.getElementById('t_discLabel').textContent = `Discount (${discPct}%)`;
+  document.getElementById('t_discount').textContent = '-฿' + fmt(discAmt);
+  document.getElementById('t_totalMonth').textContent = '฿' + fmt(priceAfterDisc);
+  document.getElementById('t_months').textContent = months + ' เดือน';
+  document.getElementById('t_totalContract').textContent = '฿' + fmt(totalContract);
+  document.getElementById('t_vat').textContent = '฿' + fmt(vat);
+  document.getElementById('t_grandTotal').textContent = '฿' + fmt(grandTotal);
+
+  if (discAmt > 0) {
+    document.getElementById('discountNote').textContent = `= -฿${fmt(discAmt)}/month`;
+  } else {
+    document.getElementById('discountNote').textContent = '';
+  }
+}
+
+// ===================== PRINT (QT_CR format) =====================
+function showPrint() {
+  const months  = parseInt(document.getElementById('contractMonths').value) || 12;
+  const discPct = parseFloat(document.getElementById('discountPct').value) || 0;
+
+  let totalPrice = 0, totalCost = 0;
+  quoteItems.forEach(i => {
+    totalPrice += i.qty * i.price;
+    totalCost  += i.qty * i.cost;
+  });
+
+  const discAmt       = totalPrice * discPct / 100;
+  const priceAfterDisc = totalPrice - discAmt;
+  const totalContract  = priceAfterDisc * months;
+  const vat            = totalContract * 0.07;
+  const grandTotal     = totalContract + vat;
+
+  const costMonth      = totalCost;
+  const totalCostContr = totalCost * months;
+  const profitMonth    = priceAfterDisc - costMonth;
+  const totalProfit    = totalContract - totalCostContr;
+  const gp             = priceAfterDisc > 0 ? (profitMonth / priceAfterDisc * 100) : 0;
+
+  const date = document.getElementById('quoteDate').value;
+
+  // ── Left info block (mirrors QT_CR layout) ──
+  document.getElementById('qtInfoLeft').innerHTML = `
+    <div class="qt-info-row"><span class="qt-info-key">Partner Company :</span><span class="qt-info-val">${v('partnerCompany')}</span></div>
+    <div class="qt-info-row"><span class="qt-info-key">Customer Name :</span><span class="qt-info-val">${v('customerName')}</span></div>
+    <div class="qt-info-row"><span class="qt-info-key">Project Name :</span><span class="qt-info-val">${v('projectName')}</span></div>
+    <div class="qt-info-row"><span class="qt-info-key">Attention :</span><span class="qt-info-val">${v('attention') || '-'}</span></div>
+    <div class="qt-info-row"><span class="qt-info-key">Telephone :</span><span class="qt-info-val">${v('telephone') || '-'}</span></div>
+    <div class="qt-info-row" style="margin-top:4px"><span class="qt-info-key">Date :</span><span class="qt-info-val">${date}</span></div>
+    <div class="qt-info-row"><span class="qt-info-key">Price Validity :</span><span class="qt-info-val">${v('validity')} Days</span></div>
+    <div class="qt-info-row"><span class="qt-info-key">Revision :</span><span class="qt-info-val">${v('revision')}</span></div>
+    <div class="qt-info-row"><span class="qt-info-key">Tenant ID (Renew) :</span><span class="qt-info-val">${v('tenantId') || '-'}</span></div>
+    <div class="qt-info-row"><span class="qt-info-key">Terms (Days) :</span><span class="qt-info-val">${v('terms') || '-'}</span></div>
+  `;
+
+  // ── Right cost summary ──
+  document.getElementById('qt_cs_months').textContent      = months + ' months';
+  document.getElementById('qt_cs_cost_month').textContent  = fmt(costMonth);
+  document.getElementById('qt_cs_total_cost').textContent  = fmt(totalCostContr);
+  document.getElementById('qt_cs_profit_month').textContent = fmt(profitMonth);
+  document.getElementById('qt_cs_total_profit').textContent = fmt(totalProfit);
+  document.getElementById('qt_cs_gp').textContent          = gp.toFixed(2) + '%';
+
+  // ── Items rows ──
+  const EMPTY_ROWS = 30; // minimum blank rows like Excel
+  let rows = '';
+  quoteItems.forEach((item, idx) => {
+    const extPrice = item.qty * item.price;
+    const extCost  = item.qty * item.cost;
+    rows += `<tr>
+      <td class="center">${idx + 1}</td>
+      <td style="font-size:8.5pt">${item.part}</td>
+      <td>${item.name}</td>
+      <td class="center">${item.qty}</td>
+      <td class="center">Month</td>
+      <td class="right">${fmt(item.price)}</td>
+      <td class="right">${fmt(extPrice)}</td>
+      <td class="right" style="color:#555">${fmt(item.cost)}</td>
+      <td class="right" style="color:#555">${fmt(extCost)}</td>
+    </tr>`;
+  });
+  // blank filler rows
+  const blanks = Math.max(0, EMPTY_ROWS - quoteItems.length);
+  for (let i = 0; i < blanks; i++) {
+    rows += `<tr style="height:20px"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+  }
+  // Sub Total row
+  rows += `<tr class="subtotal-row">
+    <td colspan="5" class="right">Sub Total</td>
+    <td class="right">${fmt(totalPrice)}</td>
+    <td class="right">${fmt(totalPrice)}</td>
+    <td class="right">${fmt(costMonth)}</td>
+    <td class="right">${fmt(costMonth)}</td>
+  </tr>`;
+  // Discount row (only if > 0)
+  if (discPct > 0) {
+    rows += `<tr style="color:#c00">
+      <td colspan="5" class="right">Discount (${discPct}%)</td>
+      <td class="right">-${fmt(discAmt)}</td>
+      <td class="right">-${fmt(discAmt)}</td>
+      <td></td><td></td>
+    </tr>`;
+  }
+  // Total /month
+  rows += `<tr class="total-row">
+    <td colspan="5" class="right">Total / Month (THB)</td>
+    <td class="right">${fmt(priceAfterDisc)}</td>
+    <td class="right">${fmt(priceAfterDisc)}</td>
+    <td class="right">${fmt(costMonth)}</td>
+    <td class="right">${fmt(costMonth)}</td>
+  </tr>`;
+  // VAT row
+  rows += `<tr class="vat-row">
+    <td colspan="5" class="right">VAT 7%</td>
+    <td class="right">${fmt(priceAfterDisc * 0.07)}</td>
+    <td class="right">${fmt(priceAfterDisc * 0.07)}</td>
+    <td></td><td></td>
+  </tr>`;
+  // Grand Total
+  rows += `<tr class="grand-row">
+    <td colspan="5" class="right">Grand Total (THB) — ${months} Months</td>
+    <td class="right">${fmt(grandTotal)}</td>
+    <td class="right">${fmt(totalContract)}</td>
+    <td class="right">${fmt(totalCostContr)}</td>
+    <td class="right">${fmt(totalCostContr)}</td>
+  </tr>`;
+
+  document.getElementById('qtBody').innerHTML = rows;
+
+  // Show as modal overlay
+  document.getElementById('printOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function hidePrint() {
+  document.getElementById('printOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function clearAll() {
+  if (confirm('ต้องการล้างรายการทั้งหมดใช่ไหม?')) {
+    quoteItems = [];
+    renderQuote();
+    recalc();
+  }
+}
+
+// ===================== PARTNER MODE TOGGLE =====================
+let isPartnerMode = false;
+
+function toggleMode() {
+  isPartnerMode = !isPartnerMode;
+  const track = document.getElementById('toggleTrack');
+  if (isPartnerMode) {
+    document.body.classList.add('partner-mode');
+    track.classList.add('partner');
+  } else {
+    document.body.classList.remove('partner-mode');
+    track.classList.remove('partner');
+  }
+}
+
+// ===================== HELPERS =====================
+function fmt(n) {
+  return (parseFloat(n) || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function v(id) {
+  return document.getElementById(id).value;
+}
+</script>
+</body>
+</html>
