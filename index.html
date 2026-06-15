@@ -19,6 +19,45 @@
     --yellow: #f5a623;
     --shadow: 0 2px 8px rgba(26,86,160,0.10);
   }
+  body.dark-mode {
+    --bg: #0f1923;
+    --card: #1a2535;
+    --border: #2d3f55;
+    --text: #e2eaf5;
+    --text-muted: #7a9ab8;
+    --shadow: 0 2px 8px rgba(0,0,0,0.40);
+  }
+  body.dark-mode .form-bar { background: #1a2535; border-color: #2d3f55; }
+  body.dark-mode input, body.dark-mode select, body.dark-mode textarea { background: #0f1923; color: #e2eaf5; border-color: #2d3f55; }
+  body.dark-mode input:focus, body.dark-mode select:focus { background: #162030; border-color: #4a7cc7; }
+  body.dark-mode .catalog-category { background: #162030; }
+  body.dark-mode .catalog-item:hover { background: #1e2f45; }
+  body.dark-mode .catalog-item { border-color: #2d3f55; }
+  body.dark-mode thead th { background: #162030; }
+  body.dark-mode tbody tr:hover { background: #1e2f45; }
+  body.dark-mode tbody td { border-color: #2d3f55; }
+  body.dark-mode .summary-card { background: #162030; border-color: #2d3f55; }
+  body.dark-mode .summary-card.green { background: #0f2820; border-color: #1e5c3a; }
+  body.dark-mode .summary-card.orange { background: #1e1608; border-color: #5c3a10; }
+  body.dark-mode .totals-table .grand { border-color: #4a7cc7; }
+
+  /* DARK MODE TOGGLE BUTTON */
+  .dark-toggle {
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .dark-toggle:hover { background: rgba(255,255,255,0.25); }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
   body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; overflow-x: auto; }
@@ -61,19 +100,19 @@
   .form-bar-field.f-md { width: 132px; }
   .form-bar-field.f-sm { width: 126px; }
   .form-bar-field.f-xs { width: 84px; }
-  .form-bar-field label { font-size: 8.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
-  .form-bar-field input { font-size: 11px; padding: 5px 5px; width: 100%; }
+  .form-bar-field label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+  .form-bar-field input { font-size: 13px; padding: 6px 6px; width: 100%; }
 
   /* LAYOUT — 2-column: catalog | right */
   .app {
     display: grid;
-    grid-template-columns: 360px 1fr;
+    grid-template-columns: 440px 1fr;
     gap: 10px;
     padding: 10px;
     align-items: start;
     min-width: 900px;
-    height: calc(100vh - 90px);
-    overflow: hidden;
+    min-height: calc(100vh - 90px);
+    overflow: visible;
   }
 
   /* PANELS */
@@ -123,7 +162,7 @@
   tbody tr:hover { background: #f8fafc; }
   tbody tr:last-child td { border-bottom: none; }
   .td-num { text-align: right; }
-  input.qty-input { width: 55px; text-align: center; padding: 3px 5px; }
+  input.qty-input { width: 55px; text-align: center; padding: 3px 5px; display: block; margin: 0 auto; }
   input.price-input { width: 85px; text-align: right; padding: 3px 5px; }
   input.desc-input { width: 100%; min-width: 140px; }
   .btn-remove { background: var(--red); color: #fff; border: none; border-radius: 4px; padding: 2px 7px; cursor: pointer; font-size: 11px; }
@@ -226,7 +265,7 @@
   .qt-header-wrap { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 6px; }
   .qt-logo { width: 60px; height: 60px; background: #1a56a0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; font-weight: 900; flex-shrink: 0; }
   .qt-company-info { flex: 1; }
-  .qt-company { font-size: 13pt; font-weight: 800; color: #1a56a0; }
+  .qt-company { font-size: 13pt; font-weight: 800; color: #000; }
   .qt-address { font-size: 9pt; color: #444; margin-top: 2px; }
 
   /* QUOTATION title bar */
@@ -319,11 +358,30 @@
 
 <div class="header no-print">
   <div>
-    <div style="font-weight:700;font-size:15px;">Cloud Price Calculator</div>
-    <div class="header-title">SiS Distribution (Thailand) Public Co., Ltd.</div>
+    <div style="font-weight:700;font-size:18px;">SiS Cloud Price Calculator</div>
+    <div class="header-title" style="font-size:14px;">SiS Distribution (Thailand) Public Co., Ltd.</div>
   </div>
   <div style="margin-left:auto;display:flex;align-items:center;gap:14px;">
     <span style="font-size:11px;opacity:0.7;">Last Updated: May 7, 2026</span>
+    <button class="dark-toggle" id="darkToggleBtn" onclick="toggleDarkMode()">🌙 Dark</button>
+    <button class="dark-toggle" id="logoutBtn" onclick="logout()" style="background:rgba(220,53,69,0.25);border-color:rgba(220,53,69,0.5);">🚪 Logout</button>
+  </div>
+</div>
+
+<!-- LOGIN OVERLAY -->
+<div id="loginOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#0f3d78 0%,#1a56a0 100%);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:40px 44px;width:340px;box-shadow:0 16px 48px rgba(0,0,0,0.3);text-align:center;">
+    <img src="SiSCloud-01.png" style="height:56px;width:auto;object-fit:contain;margin-bottom:24px;" onerror="this.style.display='none'">
+    <div style="text-align:left;margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:700;color:#5a6a7e;text-transform:uppercase;">Username</label>
+      <input id="loginUser" type="text" placeholder="Username" style="width:100%;margin-top:4px;padding:10px 12px;border:1.5px solid #d1dbe8;border-radius:8px;font-size:14px;outline:none;">
+    </div>
+    <div style="text-align:left;margin-bottom:20px;">
+      <label style="font-size:11px;font-weight:700;color:#5a6a7e;text-transform:uppercase;">Password</label>
+      <input id="loginPass" type="password" placeholder="Password" style="width:100%;margin-top:4px;padding:10px 12px;border:1.5px solid #d1dbe8;border-radius:8px;font-size:14px;outline:none;" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="loginError" style="display:none;color:#dc3545;font-size:12px;margin-bottom:12px;font-weight:600;">Username หรือ Password ไม่ถูกต้อง</div>
+    <button onclick="doLogin()" style="width:100%;background:#1a56a0;color:#fff;border:none;border-radius:8px;padding:11px;font-size:15px;font-weight:700;cursor:pointer;">เข้าสู่ระบบ</button>
   </div>
 </div>
 
@@ -365,10 +423,7 @@
       <label>Revision</label>
       <input id="revision" type="number" value="1">
     </div>
-    <div class="form-bar-field f-md">
-      <label>Tenant ID (Renew)</label>
-      <input id="tenantId" type="text" placeholder="-">
-    </div>
+
     <div class="form-bar-field f-xs">
       <label>Terms (Days)</label>
       <input id="terms" type="text" placeholder="-">
@@ -433,7 +488,7 @@
       <div class="panel-body">
         <div class="summary-grid" style="margin-bottom:16px;">
           <div class="summary-card" style="grid-column:1/-1">
-            <div class="summary-label">Price / Month (ราคาขาย หลังลด)</div>
+            <div class="summary-label">Price / Month</div>
             <div class="summary-value" id="sumPriceMonth">฿0</div>
           </div>
           <div class="summary-card internal-only">
@@ -451,24 +506,11 @@
           </div>
         </div>
 
-        <div class="discount-row">
-          <label>Discount:</label>
-          <input type="number" id="discountPct" value="0" min="0" max="100" step="0.1" oninput="recalc()">
-          <span>%</span>
-          <span class="discount-note" id="discountNote"></span>
-        </div>
+        <input type="hidden" id="discountPct" value="0">
 
         <table class="totals-table">
           <tr>
-            <td>Price/Month (ก่อนลด)</td>
-            <td id="t_priceMonth">฿0</td>
-          </tr>
-          <tr style="color:var(--red)">
-            <td id="t_discLabel">Discount (0%)</td>
-            <td id="t_discount">-฿0</td>
-          </tr>
-          <tr>
-            <td><strong>Total Price/Month (หลังลด)</strong></td>
+            <td><strong>Total Price/Month</strong></td>
             <td><strong id="t_totalMonth">฿0</strong></td>
           </tr>
           <tr>
@@ -504,7 +546,7 @@
 <div id="printArea">
   <!-- Company Header -->
   <div class="qt-header-wrap">
-    <div class="qt-logo">SiS</div>
+    <img src="SiSCloud-01.png" style="height:70px;width:auto;object-fit:contain;flex-shrink:0">
     <div class="qt-company-info">
       <div class="qt-company">SiS Distribution (Thailand) Public Co., Ltd.</div>
       <div class="qt-address">9 Pakin Building, 9th Floor, Room No.901, Ratchadaphisek Road, Din Daeng, Bangkok 10400.</div>
@@ -587,6 +629,10 @@ const CATALOG = [
   { cat: 'Flex Cloud IaaS (Virtuozzo)', part: 'SCD-VTZ-I-AFS', name: 'VTZ: All-Flash NVMe Storage per GB', price: 2.38, cost: 1.6 },
   { cat: 'Flex Cloud IaaS (Virtuozzo)', part: 'SCD-VTZ-I-HBS', name: 'VTZ: Hybrid Storage per GB', price: 2.12, cost: 0.9 },
   { cat: 'Flex Cloud IaaS (Virtuozzo)', part: 'SCD-VTZ-I-VPC', name: 'VTZ: Virtual Private Cloud per Site', price: 193, cost: 153.85, remarks: 'Min. 1 VPC per Site (ETIX or IDC)' },
+  { cat: 'Flex Cloud IaaS (Virtuozzo)', part: 'SCD-PUB-IP', name: 'Dedicated Public IP Address', price: 192.32, cost: 153.85, remarks: 'Min. 1 IP address per Tenant' },
+  { cat: 'Flex Cloud IaaS (Virtuozzo)', part: 'SCD-HS-VM01', name: 'HillStone-VM01 vFirewall (SSL VPN max 5 concurrent) per Tenant', price: 1130, cost: 1008.19, remarks: 'เลือกอย่างใดอย่างหนึ่ง FG หรือ HS' },
+  { cat: 'Flex Cloud IaaS (Virtuozzo)', part: 'SCD-CS-NGAV', name: 'CrowdStrike MSSP Protect (NGAV) per VM', price: 105.8, cost: 95.21, remarks: '(VM required internet access)' },
+  { cat: 'Flex Cloud IaaS (Virtuozzo)', part: 'SCD-MS-WIN-SVR-DC', name: 'Microsoft Windows Server Data Center Edition per vCPU', price: 138.16, cost: 131.25 },
 
   // Platform: Essential Cloud IaaS (Nutanix)
   { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-NTX-I-VM', name: 'NTX: Virtual Machine', price: 1, cost: 1 },
@@ -595,13 +641,18 @@ const CATALOG = [
   { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-NTX-I-HBS', name: 'NTX: Hybrid Storage per GB', price: 1.22, cost: 0.91, remarks: 'เลือกอย่างใดอย่างหนึ่ง' },
   { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-NTX-I-HBS-O', name: 'NTX: Hybrid Storage per GB w/ 7 Offsite Snapshots', price: 2.12, cost: 1.59, remarks: 'เลือกอย่างใดอย่างหนึ่ง' },
   { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-NTX-I-VPC', name: 'NTX: Virtual Private Cloud per Site', price: 193, cost: 153.85, remarks: 'Min. 1 VPC per Site (ETIX or IDC)' },
-
+  { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-PUB-IP', name: 'Dedicated Public IP Address', price: 192.32, cost: 153.85, remarks: 'Min. 1 IP address per Tenant' },
+  { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-HS-VM01', name: 'HillStone-VM01 vFirewall (SSL VPN max 5 concurrent) per Tenant', price: 1130, cost: 1008.19, remarks: 'เลือกอย่างใดอย่างหนึ่ง FG หรือ HS' },
+  { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-CS-NGAV', name: 'CrowdStrike MSSP Protect (NGAV) per VM', price: 105.8, cost: 95.21, remarks: '(VM required internet access)' },
+  { cat: 'Essential Cloud IaaS (Nutanix)', part: 'SCD-MS-WIN-SVR-DC', name: 'Microsoft Windows Server Data Center Edition per vCPU', price: 138.16, cost: 131.25 },
+  
   // Essential Cloud DRaaS (Nutanix)
   { cat: 'Essential Cloud DRaaS (Nutanix)', part: 'SCD-NTX-DR-VM', name: 'NTX-DR: Virtual Machine', price: 1, cost: 1 },
   { cat: 'Essential Cloud DRaaS (Nutanix)', part: 'SCD-NTX-DR-VCPU', name: 'NTX-DR: vCPU', price: 87.14, cost: 65.35 },
   { cat: 'Essential Cloud DRaaS (Nutanix)', part: 'SCD-NTX-DR-RAM', name: 'NTX-DR: Memory per GB', price: 18.16, cost: 13.61 },
   { cat: 'Essential Cloud DRaaS (Nutanix)', part: 'SCD-NTX-DR-HBS', name: 'NTX-DR: Hybrid Storage per GB', price: 1.38, cost: 1.02 },
   { cat: 'Essential Cloud DRaaS (Nutanix)', part: 'SCD-NTX-DR-VPC', name: 'NTX-DR: Virtual Private Cloud per Site', price: 193, cost: 153.85, remarks: 'Min. 1 VPC per Site (ETIX or IDC)' },
+  { cat: 'Essential Cloud DRaaS (Nutanix)', part: 'SCD-PUB-IP', name: 'Dedicated Public IP Address', price: 192.32, cost: 153.85, remarks: 'Min. 1 IP address per Tenant' },
 
   // Enterprise Cloud DRaaS (VMWare)
   { cat: 'Enterprise Cloud DRaaS (VMWare)', part: 'SCD-VMW-DR-VM', name: 'VMW-DR: Virtual Machine', price: 302.48, cost: 272.22 },
@@ -609,6 +660,7 @@ const CATALOG = [
   { cat: 'Enterprise Cloud DRaaS (VMWare)', part: 'SCD-VMW-DR-RAM', name: 'VMW-DR: Memory per GB', price: 28.27, cost: 22.6 },
   { cat: 'Enterprise Cloud DRaaS (VMWare)', part: 'SCD-VMW-DR-AFS', name: 'VMW-DR: All-Flash Storage per GB', price: 2.84, cost: 2.27 },
   { cat: 'Enterprise Cloud DRaaS (VMWare)', part: 'SCD-VMW-DR-HBS', name: 'VMW-DR: Hybrid Storage per GB', price: 0.93, cost: 0.73 },
+  { cat: 'Enterprise Cloud DRaaS (VMWare)', part: 'SCD-PUB-IP', name: 'Dedicated Public IP Address', price: 192.32, cost: 153.85, remarks: 'Min. 1 IP address per Tenant' },
 
   // Virtual Private Server (VPS) — Disk
   { cat: 'Virtual Private Server (VPS)', part: 'SCD-VPS-T1', name: 'VPS T1-2vCPU, 2GB RAM, Disk 100GB 1IP', price: 820, cost: 682.35 },
@@ -667,10 +719,6 @@ const CATALOG = [
   { cat: 'Storage Services', part: 'SCD-DD-TB', name: 'DataDomain (DDaaS) per TB (Back-end)', price: 2720.62, cost: 2176.49 },
   { cat: 'Storage Services', part: 'SCD-OBJ-TB', name: 'Object Storage per TB', price: 623.6, cost: 498.87 },
 
-  // Monitoring & Alert
-  { cat: 'Monitoring & Alert & Report', part: 'SCD-VMW-VRL-LOG', name: 'vRealize Log Insight (90 days log retention for NSX)', price: 991.99, cost: 793.59 },
-  { cat: 'Monitoring & Alert & Report', part: 'SCD-PRTG-100S', name: 'PRTG Monthly Reporting & Alert (Email, SMS, 100 Sensors)', price: 4214.75, cost: 3371.79 },
-  { cat: 'Monitoring & Alert & Report', part: 'SCD-NTX-B-REPORT', name: 'Monthly Backup Report per Tenant', price: 588.24, cost: 500 },
 
   // Backup as a Services
   { cat: 'Backup as a Services', part: 'SCD-VEM-STD', name: 'Veeam Backup Standard per VM', price: 151.86, cost: 136.67 },
@@ -698,19 +746,55 @@ const CATALOG = [
   { cat: 'WASABI', part: 'WSB-HCS-TB', name: 'Wasabi Hot Cloud Storage per TB', price: 258.83, cost: 220 },
   { cat: 'WASABI', part: 'WSB-WCN-TB', name: 'Wasabi Cloud NAS per TB', price: 341.18, cost: 290 },
   { cat: 'WASABI', part: 'WSB-WSC-TB', name: 'Wasabi Surveillance Cloud per TB', price: 420, cost: 357 },
+  { cat: 'WASABI', part: 'SCD-VEM-STD', name: 'Veeam Backup Standard per VM', price: 151.86, cost: 136.67 },
+  { cat: 'WASABI', part: 'SCD-VEM-ENT', name: 'Veeam Backup Enterprise per VM', price: 271.62, cost: 244.44 },
 
-  // Private Cloud
-  { cat: 'Private Cloud', part: 'SCD-PRIVATE-FR', name: 'Full Rack Colocation', price: 52941.18, cost: 45000, remarks: 'สำหรับโปรเจค dedicate เท่านั้น' },
-  { cat: 'Private Cloud', part: 'SCD-PRIVATE-HR', name: 'Half Rack Colocation', price: 27058.83, cost: 23000, remarks: 'สำหรับโปรเจค dedicate เท่านั้น' },
-  { cat: 'Private Cloud', part: 'SCD-PRIVATE-1U', name: '1U Rack Colocation', price: 2058.83, cost: 1750, remarks: 'สำหรับโปรเจค dedicate เท่านั้น' },
-  { cat: 'Private Cloud', part: 'SCD-PRIVATE-PORT', name: '10G/1G SFP+ Port (no transceiver module)', price: 600, cost: 510, remarks: 'สำหรับโปรเจค dedicate เท่านั้น' },
-  { cat: 'Private Cloud', part: 'SCD-PRIVATE-M-10G', name: '10GBase-SR SFP+ transceiver module', price: 617.65, cost: 525, remarks: 'สำหรับโปรเจค dedicate เท่านั้น' },
-  { cat: 'Private Cloud', part: 'SCD-PRIVATE-M-1G', name: '1GBase-T SFP transceiver module', price: 309.42, cost: 263, remarks: 'สำหรับโปรเจค dedicate เท่านั้น' },
 
 ];
 
 // ===================== STATE =====================
 let quoteItems = [];
+
+const STORAGE_KEY = 'sis_quote_state';
+
+function saveState() {
+  const state = {
+    items: quoteItems,
+    partnerCompany: document.getElementById('partnerCompany')?.value || '',
+    customerName: document.getElementById('customerName')?.value || '',
+    projectName: document.getElementById('projectName')?.value || '',
+    attention: document.getElementById('attention')?.value || '',
+    telephone: document.getElementById('telephone')?.value || '',
+    quoteDate: document.getElementById('quoteDate')?.value || '',
+    validity: document.getElementById('validity')?.value || '30',
+    revision: document.getElementById('revision')?.value || '1',
+    terms: document.getElementById('terms')?.value || '',
+    contractMonths: document.getElementById('contractMonths')?.value || '12',
+    discountPct: document.getElementById('discountPct')?.value || '0',
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    quoteItems = state.items || [];
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
+    set('partnerCompany', state.partnerCompany);
+    set('customerName', state.customerName);
+    set('projectName', state.projectName);
+    set('attention', state.attention);
+    set('telephone', state.telephone);
+    if (state.quoteDate) set('quoteDate', state.quoteDate);
+    set('validity', state.validity);
+    set('revision', state.revision);
+    set('terms', state.terms);
+    set('contractMonths', state.contractMonths);
+    set('discountPct', state.discountPct);
+  } catch(e) {}
+}
 
 // ===================== INIT =====================
 document.addEventListener('DOMContentLoaded', () => {
@@ -719,7 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === document.getElementById('printOverlay')) hidePrint();
   });
 
-  // Set today's date
+  // Set today's date (only if no saved state)
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('quoteDate').value = today;
 
@@ -732,8 +816,13 @@ document.addEventListener('DOMContentLoaded', () => {
     sel.appendChild(o);
   });
 
+  loadState();
   renderCatalog();
+  renderQuote();
   recalc();
+
+  // Auto-save on any input change
+  document.addEventListener('input', saveState);
 });
 
 // ===================== CATALOG RENDER =====================
@@ -796,12 +885,23 @@ function addItem(partNo) {
   }
   renderQuote();
   recalc();
+  saveState();
 }
 
 function removeItem(idx) {
   quoteItems.splice(idx, 1);
   renderQuote();
   recalc();
+  saveState();
+}
+
+function clearAllItems() {
+  showConfirm('ลบรายการทั้งหมดใช่ไหมครับ?', () => {
+    quoteItems = [];
+    renderQuote();
+    recalc();
+    saveState();
+  });
 }
 
 function renderQuote() {
@@ -818,9 +918,9 @@ function renderQuote() {
     tr.innerHTML = `
       <td>${idx + 1}</td>
       <td style="white-space:nowrap;font-size:11px;font-weight:600;color:var(--primary)">${item.part}</td>
-      <td><input class="desc-input" value="${item.name}" oninput="updateName(${idx}, this.value)"></td>
+      <td><span style="font-size:12px;color:var(--text);">${item.name}</span></td>
       <td class="td-num"><input class="qty-input" type="number" value="${item.qty}" min="0" oninput="updateQty(${idx}, this.value)"></td>
-      <td class="td-num"><input class="price-input" type="number" value="${item.price}" step="0.01" oninput="updatePrice(${idx}, this.value)"></td>
+      <td class="td-num" style="font-weight:600">฿${fmt(item.price)}</td>
       <td class="td-num" style="font-weight:700">฿${fmt(extPrice)}</td>
       <td class="td-num" style="color:var(--text-muted)">฿${fmt(item.cost)}</td>
       <td class="td-num" style="color:var(--text-muted)">฿${fmt(extCost)}</td>
@@ -832,12 +932,22 @@ function renderQuote() {
 
 function updateQty(idx, val) {
   quoteItems[idx].qty = parseFloat(val) || 0;
-  renderQuote();
+  const row = document.querySelectorAll('#quoteBody tr')[idx];
+  if (row) {
+    const extPrice = quoteItems[idx].qty * quoteItems[idx].price;
+    const extCost = quoteItems[idx].qty * quoteItems[idx].cost;
+    row.cells[5].textContent = '฿' + fmt(extPrice);
+    row.cells[7].textContent = '฿' + fmt(extCost);
+  }
   recalc();
 }
 function updatePrice(idx, val) {
   quoteItems[idx].price = parseFloat(val) || 0;
-  renderQuote();
+  const row = document.querySelectorAll('#quoteBody tr')[idx];
+  if (row) {
+    const extPrice = quoteItems[idx].qty * quoteItems[idx].price;
+    row.cells[5].textContent = '฿' + fmt(extPrice);
+  }
   recalc();
 }
 function updateName(idx, val) {
@@ -874,20 +984,12 @@ function recalc() {
   gpBar.style.background = gp >= 20 ? '#17a85a' : gp >= 10 ? '#f5a623' : '#dc3545';
 
   // Totals table
-  document.getElementById('t_priceMonth').textContent = '฿' + fmt(totalPrice);
-  document.getElementById('t_discLabel').textContent = `Discount (${discPct}%)`;
-  document.getElementById('t_discount').textContent = '-฿' + fmt(discAmt);
-  document.getElementById('t_totalMonth').textContent = '฿' + fmt(priceAfterDisc);
-  document.getElementById('t_months').textContent = months + ' เดือน';
-  document.getElementById('t_totalContract').textContent = '฿' + fmt(totalContract);
-  document.getElementById('t_vat').textContent = '฿' + fmt(vat);
-  document.getElementById('t_grandTotal').textContent = '฿' + fmt(grandTotal);
-
-  if (discAmt > 0) {
-    document.getElementById('discountNote').textContent = `= -฿${fmt(discAmt)}/month`;
-  } else {
-    document.getElementById('discountNote').textContent = '';
-  }
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setEl('t_totalMonth', '฿' + fmt(priceAfterDisc));
+  setEl('t_months', months + ' เดือน');
+  setEl('t_totalContract', '฿' + fmt(totalContract));
+  setEl('t_vat', '฿' + fmt(vat));
+  setEl('t_grandTotal', '฿' + fmt(grandTotal));
 }
 
 // ===================== PRINT (QT_CR format) =====================
@@ -925,7 +1027,6 @@ function showPrint() {
     <div class="qt-info-row" style="margin-top:4px"><span class="qt-info-key">Date :</span><span class="qt-info-val">${date}</span></div>
     <div class="qt-info-row"><span class="qt-info-key">Price Validity :</span><span class="qt-info-val">${v('validity')} Days</span></div>
     <div class="qt-info-row"><span class="qt-info-key">Revision :</span><span class="qt-info-val">${v('revision')}</span></div>
-    <div class="qt-info-row"><span class="qt-info-key">Tenant ID (Renew) :</span><span class="qt-info-val">${v('tenantId') || '-'}</span></div>
     <div class="qt-info-row"><span class="qt-info-key">Terms (Days) :</span><span class="qt-info-val">${v('terms') || '-'}</span></div>
   `;
 
@@ -938,7 +1039,6 @@ function showPrint() {
   document.getElementById('qt_cs_gp').textContent          = gp.toFixed(2) + '%';
 
   // ── Items rows ──
-  const EMPTY_ROWS = 30; // minimum blank rows like Excel
   let rows = '';
   quoteItems.forEach((item, idx) => {
     const extPrice = item.qty * item.price;
@@ -951,22 +1051,17 @@ function showPrint() {
       <td class="center">Month</td>
       <td class="right">${fmt(item.price)}</td>
       <td class="right">${fmt(extPrice)}</td>
-      <td class="right" style="color:#555">${fmt(item.cost)}</td>
-      <td class="right" style="color:#555">${fmt(extCost)}</td>
+      <td class="right internal-only" style="color:#555">${fmt(item.cost)}</td>
+      <td class="right internal-only" style="color:#555">${fmt(extCost)}</td>
     </tr>`;
   });
-  // blank filler rows
-  const blanks = Math.max(0, EMPTY_ROWS - quoteItems.length);
-  for (let i = 0; i < blanks; i++) {
-    rows += `<tr style="height:20px"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
-  }
   // Sub Total row
   rows += `<tr class="subtotal-row">
     <td colspan="5" class="right">Sub Total</td>
     <td class="right">${fmt(totalPrice)}</td>
     <td class="right">${fmt(totalPrice)}</td>
-    <td class="right">${fmt(costMonth)}</td>
-    <td class="right">${fmt(costMonth)}</td>
+    <td class="right internal-only">${fmt(costMonth)}</td>
+    <td class="right internal-only">${fmt(costMonth)}</td>
   </tr>`;
   // Discount row (only if > 0)
   if (discPct > 0) {
@@ -974,7 +1069,7 @@ function showPrint() {
       <td colspan="5" class="right">Discount (${discPct}%)</td>
       <td class="right">-${fmt(discAmt)}</td>
       <td class="right">-${fmt(discAmt)}</td>
-      <td></td><td></td>
+      <td class="internal-only"></td><td class="internal-only"></td>
     </tr>`;
   }
   // Total /month
@@ -982,23 +1077,21 @@ function showPrint() {
     <td colspan="5" class="right">Total / Month (THB)</td>
     <td class="right">${fmt(priceAfterDisc)}</td>
     <td class="right">${fmt(priceAfterDisc)}</td>
-    <td class="right">${fmt(costMonth)}</td>
-    <td class="right">${fmt(costMonth)}</td>
+    <td class="right internal-only">${fmt(costMonth)}</td>
+    <td class="right internal-only">${fmt(costMonth)}</td>
   </tr>`;
   // VAT row
   rows += `<tr class="vat-row">
-    <td colspan="5" class="right">VAT 7%</td>
-    <td class="right">${fmt(priceAfterDisc * 0.07)}</td>
-    <td class="right">${fmt(priceAfterDisc * 0.07)}</td>
-    <td></td><td></td>
+    <td colspan="6" class="right">VAT 7%</td>
+    <td class="right">${fmt(totalContract * 0.07)}</td>
+    <td class="internal-only"></td><td class="internal-only"></td>
   </tr>`;
   // Grand Total
   rows += `<tr class="grand-row">
-    <td colspan="5" class="right">Grand Total (THB) — ${months} Months</td>
+    <td colspan="6" class="right">Grand Total (THB) — ${months} Months</td>
     <td class="right">${fmt(grandTotal)}</td>
-    <td class="right">${fmt(totalContract)}</td>
-    <td class="right">${fmt(totalCostContr)}</td>
-    <td class="right">${fmt(totalCostContr)}</td>
+    <td class="right internal-only">${fmt(totalCostContr)}</td>
+    <td class="right internal-only">${fmt(totalProfit)}</td>
   </tr>`;
 
   document.getElementById('qtBody').innerHTML = rows;
@@ -1014,12 +1107,58 @@ function hidePrint() {
 }
 
 function clearAll() {
-  if (confirm('ต้องการล้างรายการทั้งหมดใช่ไหม?')) {
+  showConfirm('ต้องการล้างรายการทั้งหมดใช่ไหม?', () => {
     quoteItems = [];
+    localStorage.removeItem('sis_quote_state');
     renderQuote();
     recalc();
+  });
+}
+
+// ===================== LOGIN / LOGOUT =====================
+const USERS = { 'jackgaram': 'Jackgaram17' };
+
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  if (USERS[u] && USERS[u] === p) {
+    sessionStorage.setItem('sis_logged_in', u);
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('loginError').style.display = 'none';
+  } else {
+    document.getElementById('loginError').style.display = 'block';
   }
 }
+
+function logout() {
+  showConfirm('ต้องการออกจากระบบใช่ไหม?', () => {
+    sessionStorage.removeItem('sis_logged_in');
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
+    document.getElementById('loginOverlay').style.display = 'flex';
+  });
+}
+
+(function checkLogin() {
+  if (!sessionStorage.getItem('sis_logged_in')) {
+    document.getElementById('loginOverlay').style.display = 'flex';
+  }
+})();
+
+// ===================== DARK MODE =====================
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  const btn = document.getElementById('darkToggleBtn');
+  btn.textContent = isDark ? '☀️ Light' : '🌙 Dark';
+  localStorage.setItem('sis_dark_mode', isDark ? '1' : '0');
+}
+(function() {
+  if (localStorage.getItem('sis_dark_mode') === '1') {
+    document.body.classList.add('dark-mode');
+    const btn = document.getElementById('darkToggleBtn');
+    if (btn) btn.textContent = '☀️ Light';
+  }
+})();
 
 // ===================== PARTNER MODE TOGGLE =====================
 let isPartnerMode = false;
@@ -1043,6 +1182,27 @@ function fmt(n) {
 function v(id) {
   return document.getElementById(id).value;
 }
+// ===================== CUSTOM CONFIRM MODAL =====================
+function showConfirm(message, onOk) {
+  document.getElementById('confirmMsg').textContent = message;
+  const modal = document.getElementById('confirmModal');
+  modal.style.display = 'flex';
+  document.getElementById('confirmOk').onclick = () => { modal.style.display = 'none'; onOk(); };
+  document.getElementById('confirmCancel').onclick = () => { modal.style.display = 'none'; };
+}
 </script>
+
+<!-- CUSTOM CONFIRM MODAL -->
+<div id="confirmModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;">
+  <div style="background:var(--card);color:var(--text);border-radius:12px;padding:28px 32px;min-width:300px;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.25);text-align:center;">
+    <div style="font-size:32px;margin-bottom:10px;">🗑️</div>
+    <div id="confirmMsg" style="font-size:15px;font-weight:600;margin-bottom:20px;"></div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button id="confirmOk" style="background:#dc3545;color:#fff;border:none;border-radius:8px;padding:9px 28px;font-size:14px;font-weight:700;cursor:pointer;">ลบ</button>
+      <button id="confirmCancel" style="background:var(--border);color:var(--text);border:none;border-radius:8px;padding:9px 28px;font-size:14px;font-weight:700;cursor:pointer;">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
