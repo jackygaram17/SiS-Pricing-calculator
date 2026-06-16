@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SiS Cloud – Price Calculator</title>
+<title>SiS Cloud – Pricing Calculator</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root {
     --primary: #1a56a0;
@@ -165,7 +166,7 @@
   input:focus, select:focus, textarea:focus { border-color: var(--primary); background: #fff; }
 
   /* ── TOAST ── */
-  #toast { position: fixed; bottom: 22px; right: 22px; z-index: 9999; background: #1e2b3c; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,.3); transform: translateY(16px); opacity: 0; transition: all .22s; pointer-events: none; }
+  #toast { position: fixed; bottom: 22px; right: 22px; z-index: 9999; background: #1e2b3c; color: #fff; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,.3); transform: translateY(16px); opacity: 0; transition: opacity .22s; pointer-events: none; white-space: nowrap; }
   #toast.show { transform: translateY(0); opacity: 1; }
   #toast.success { background: var(--green); }
   #toast.error   { background: var(--red); }
@@ -272,6 +273,10 @@
   .qmeta-field input { border: 1.5px solid var(--border); border-radius: 6px; padding: 5px 9px; font-size: 13px; background: var(--card); color: var(--text); outline: none; }
   .qmeta-field input:focus { border-color: var(--primary); }
   .quote-wrap { flex: 1; overflow-y: auto; padding: 12px 16px 0; }
+  .quote-remark-wrap { padding: 0 16px 10px; flex-shrink: 0; }
+  .quote-remark-wrap label { font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 4px; }
+  .quote-remark-wrap textarea { width: 100%; min-height: 56px; max-height: 120px; resize: vertical; border: 1.5px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 13px; font-family: inherit; color: var(--text); background: var(--bg); outline: none; box-sizing: border-box; }
+  .quote-remark-wrap textarea:focus { border-color: var(--primary); background: var(--card); }
   .quote-tbl { width: 100%; border-collapse: collapse; }
   .quote-tbl thead th { background: #e8f0fb; padding: 8px 8px; font-size: 12px; font-weight: 700; color: var(--primary); border-bottom: 2px solid var(--border); white-space: nowrap; }
   .quote-tbl tbody td { padding: 7px 8px; border-bottom: 1px solid #eef2f7; font-size: 13px; vertical-align: middle; }
@@ -360,7 +365,7 @@
 <!-- ── HEADER ── -->
 <div class="header" id="appHeader" style="display:none">
   <div class="header-brand">SiS <span>Cloud</span></div>
-  <div style="font-size:13px;opacity:.9;color:#fff;font-weight:500;">Price Calculator</div>
+  <div style="font-size:13px;opacity:.9;color:#fff;font-weight:500;">Pricing Calculator</div>
   <div class="header-right">
     <span class="user-chip" id="userChip"></span>
     <span class="role-chip" id="roleChip"></span>
@@ -372,7 +377,7 @@
 <!-- ── NAV TABS ── -->
 <div class="nav-tabs" id="navTabs" style="display:none">
   <button class="nav-tab" id="tab-admin" onclick="switchMain('admin')">⚙️ Admin</button>
-  <button class="nav-tab" id="tab-partner" onclick="switchMain('partner')">📄 Price Calculator</button>
+  <button class="nav-tab" id="tab-partner" onclick="switchMain('partner')">📄 Pricing Calculator</button>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -398,9 +403,11 @@
     </div>
     <div class="card">
       <div class="card-header">
-        <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <div class="card-title">🛒 จัดการ Products</div>
           <button class="btn btn-primary btn-sm" onclick="openProductModal()">+ เพิ่ม Product</button>
+          <button class="btn btn-outline btn-sm" onclick="downloadProductTemplate()">📥 Download Template</button>
+          <button class="btn btn-outline btn-sm" onclick="openImportModal()">📤 Import Excel</button>
         </div>
       </div>
       <div class="card-body">
@@ -619,6 +626,12 @@
         </table>
       </div>
 
+      <!-- Remark -->
+      <div class="quote-remark-wrap">
+        <label for="qRemark">Remark</label>
+        <textarea id="qRemark" placeholder="ระบุหมายเหตุเพิ่มเติม (ถ้ามี)" oninput="markDirty()"></textarea>
+      </div>
+
       <!-- Footer: Discount + Summary -->
       <div class="quote-footer">
         <div class="discount-row internal-col">
@@ -635,6 +648,7 @@
             <div class="sum-label">💰 ราคารวม / เดือน</div>
             <div class="sum-value" id="sumPrice">฿0.00</div>
           </div>
+          <button class="btn btn-outline" style="flex-shrink:0;align-self:stretch" onclick="calcTotals();showToast('รีเฟรชยอดเงินแล้ว','success',this)" title="คำนวณยอดเงินใหม่">🔄 รีเฟรชยอด</button>
           <div class="sum-card internal-col">
             <div class="sum-label">📦 ต้นทุนรวม / เดือน</div>
             <div class="sum-value" id="sumCost">฿0.00</div>
@@ -744,6 +758,16 @@
             <div class="form-hint">เพิ่มได้สูงสุด 1 รายการต่อ Quote</div>
           </div>
         </div>
+        <div class="form-group" style="flex-direction:row;align-items:center;gap:10px;">
+          <label class="toggle">
+            <input type="checkbox" id="fm_fixed_price">
+            <span class="toggle-slider"></span>
+          </label>
+          <div>
+            <span style="font-size:13px;font-weight:600">ราคาตายตัว (ไม่บังคับ GP ขั้นต่ำ)</span>
+            <div class="form-hint">ไม่ถูกนำไปคำนวณ GP ขั้นต่ำ 15% และไม่ถูกปัดเศษรวมกับยอดอื่น</div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -819,6 +843,47 @@
     </div>
     <div id="fcpErr"></div>
     <button class="fcp-btn" id="fcpBtn" onclick="fcpSubmit()">✅ ตั้ง Password และเข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- Import Products Modal -->
+<div id="importModal" class="modal-backdrop" onclick="if(event.target===this)closeModal('importModal')">
+  <div class="modal modal-lg" style="max-width:680px;width:95%">
+    <div class="modal-header">
+      <div class="modal-title">📤 Import Products จาก Excel</div>
+      <button class="modal-close" onclick="closeModal('importModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-hint" style="margin-bottom:12px">
+        ใช้ไฟล์จาก <a href="#" onclick="downloadProductTemplate();return false">Template</a> เท่านั้น คอลัมน์ <b>Part No.</b> ที่มีอยู่แล้วจะถูกอัปเดต ส่วนรายการใหม่จะถูกเพิ่มเข้าระบบ
+      </div>
+      <div class="form-group">
+        <input type="file" id="importFile" accept=".xlsx,.xls" onchange="handleImportFile(this.files[0])">
+      </div>
+      <div id="importPreviewWrap" style="display:none;margin-top:14px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px" id="importSummary"></div>
+        <div class="tbl-wrap" style="max-height:320px;overflow-y:auto">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th style="width:32px">#</th>
+                <th>Category</th>
+                <th style="width:140px">Part No.</th>
+                <th>ชื่อสินค้า</th>
+                <th style="width:90px" class="tbl-num">Price</th>
+                <th style="width:90px" class="tbl-num">Cost</th>
+                <th style="width:80px;text-align:center">สถานะ</th>
+              </tr>
+            </thead>
+            <tbody id="importPreviewBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('importModal')">ยกเลิก</button>
+      <button class="btn btn-primary" id="importConfirmBtn" onclick="confirmImport()" disabled>ยืนยัน Import</button>
+    </div>
   </div>
 </div>
 
@@ -1121,8 +1186,9 @@ function renderProducts(list) {
       <td>
         <div style="font-size:12px">${p.name}</div>
         <div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap">
-          ${p.limit_one ? `<span class="badge badge-red" style="font-size:10px">1 Unit</span>` : ''}
-          ${p.remarks   ? `<span style="font-size:10px;color:var(--accent)">⚠ ${p.remarks}</span>` : ''}
+          ${p.limit_one   ? `<span class="badge badge-red" style="font-size:10px">1 Unit</span>` : ''}
+          ${p.fixed_price ? `<span class="badge badge-gray" style="font-size:10px">🔒 ราคาตายตัว</span>` : ''}
+          ${p.remarks     ? `<span style="font-size:10px;color:var(--accent)">⚠ ${p.remarks}</span>` : ''}
         </div>
       </td>
       <td><span class="badge badge-blue" style="font-size:9px">${shortCat(p.category)}</span></td>
@@ -1193,6 +1259,7 @@ function openProductModal(id = null) {
     document.getElementById('fm_sort_order').value  = p.sort_order;
     document.getElementById('fm_is_active').checked  = p.is_active;
     document.getElementById('fm_limit_one').checked  = p.limit_one || false;
+    document.getElementById('fm_fixed_price').checked = p.fixed_price || false;
     calcGP();
   } else {
     ['fm_category','fm_part_no','fm_name','fm_price','fm_cost','fm_remarks'].forEach(id => {
@@ -1203,6 +1270,7 @@ function openProductModal(id = null) {
     document.getElementById('fm_sort_order').value   = 0;
     document.getElementById('fm_is_active').checked  = true;
     document.getElementById('fm_limit_one').checked  = false;
+    document.getElementById('fm_fixed_price').checked = false;
     document.getElementById('fm_gp').value = '';
   }
 
@@ -1240,6 +1308,7 @@ async function saveProduct() {
     sort_order: parseInt(document.getElementById('fm_sort_order').value) || 0,
     is_active:  document.getElementById('fm_is_active').checked,
     limit_one:  document.getElementById('fm_limit_one').checked,
+    fixed_price: document.getElementById('fm_fixed_price').checked,
   };
 
   if (!payload.category || !payload.part_no || !payload.name) {
@@ -1274,6 +1343,115 @@ async function deleteProduct(id, name) {
 }
 
 // ══════════════════════════════════════
+// PRODUCTS IMPORT / EXPORT (Excel)
+// ══════════════════════════════════════
+const IMPORT_HEADERS = ['Category', 'Part No.', 'ชื่อสินค้า', 'Price', 'Cost', 'Remarks', 'Sort Order', 'Active (TRUE/FALSE)', 'Limit One (TRUE/FALSE)', 'Fixed Price (TRUE/FALSE)'];
+
+function downloadProductTemplate() {
+  const sample = [
+    IMPORT_HEADERS,
+    ['Flex Cloud IaaS (Virtuozzo)', 'SCD-VTZ-I-VM', 'VTZ: Virtual Machine', 120, 80, '', 0, 'TRUE', 'FALSE', 'FALSE'],
+  ];
+  const ws = XLSX.utils.aoa_to_sheet(sample);
+  ws['!cols'] = [{ wch: 32 }, { wch: 18 }, { wch: 32 }, { wch: 10 }, { wch: 10 }, { wch: 20 }, { wch: 10 }, { wch: 18 }, { wch: 18 }, { wch: 20 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Products');
+  XLSX.writeFile(wb, 'product_import_template.xlsx');
+}
+
+let _importRows = [];
+
+function openImportModal() {
+  _importRows = [];
+  document.getElementById('importFile').value = '';
+  document.getElementById('importPreviewWrap').style.display = 'none';
+  document.getElementById('importConfirmBtn').disabled = true;
+  document.getElementById('importModal').classList.add('open');
+}
+
+function handleImportFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const wb = XLSX.read(e.target.result, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+    _importRows = rows.map(r => ({
+      category:   String(r['Category'] || '').trim(),
+      part_no:    String(r['Part No.'] || '').trim().toUpperCase(),
+      name:       String(r['ชื่อสินค้า'] || '').trim(),
+      price:      parseFloat(r['Price']) || 0,
+      cost:       parseFloat(r['Cost']) || 0,
+      remarks:    String(r['Remarks'] || '').trim() || null,
+      sort_order: parseInt(r['Sort Order']) || 0,
+      is_active:  String(r['Active (TRUE/FALSE)']).toUpperCase() !== 'FALSE',
+      limit_one:  String(r['Limit One (TRUE/FALSE)']).toUpperCase() === 'TRUE',
+      fixed_price: String(r['Fixed Price (TRUE/FALSE)']).toUpperCase() === 'TRUE',
+    })).filter(r => r.category && r.part_no && r.name);
+
+    renderImportPreview();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderImportPreview() {
+  const wrap = document.getElementById('importPreviewWrap');
+  const body = document.getElementById('importPreviewBody');
+  const btn  = document.getElementById('importConfirmBtn');
+
+  if (!_importRows.length) {
+    wrap.style.display = '';
+    document.getElementById('importSummary').textContent = 'ไม่พบข้อมูลที่ถูกต้องในไฟล์ (ตรวจสอบ Category / Part No. / ชื่อสินค้า)';
+    body.innerHTML = '';
+    btn.disabled = true;
+    return;
+  }
+
+  const updateCount = _importRows.filter(r => allProducts.some(p => p.part_no === r.part_no)).length;
+  const insertCount = _importRows.length - updateCount;
+  document.getElementById('importSummary').textContent =
+    `พบ ${_importRows.length} รายการ — เพิ่มใหม่ ${insertCount} / อัปเดต ${updateCount}`;
+
+  body.innerHTML = _importRows.map((r, i) => {
+    const exists = allProducts.some(p => p.part_no === r.part_no);
+    return `<tr>
+      <td>${i + 1}</td>
+      <td>${r.category}</td>
+      <td style="font-weight:700;color:var(--primary)">${r.part_no}</td>
+      <td>${r.name}</td>
+      <td class="tbl-num">฿${fmt(r.price)}</td>
+      <td class="tbl-num">฿${fmt(r.cost)}</td>
+      <td style="text-align:center"><span class="badge ${exists ? 'badge-orange' : 'badge-green'}">${exists ? 'อัปเดต' : 'ใหม่'}</span></td>
+    </tr>`;
+  }).join('');
+
+  wrap.style.display = '';
+  btn.disabled = false;
+}
+
+async function confirmImport() {
+  if (!_importRows.length) return;
+  const btn = document.getElementById('importConfirmBtn');
+  btn.disabled = true;
+  btn.textContent = 'กำลัง Import...';
+
+  let ok = 0, fail = 0;
+  for (const r of _importRows) {
+    const existing = allProducts.find(p => p.part_no === r.part_no);
+    const { error } = existing
+      ? await sb.from('products').update(r).eq('id', existing.id)
+      : await sb.from('products').insert(r);
+    if (error) fail++; else ok++;
+  }
+
+  btn.textContent = 'ยืนยัน Import';
+  closeModal('importModal');
+  await loadProducts();
+  showToast(`Import สำเร็จ ${ok} รายการ${fail ? ` (ผิดพลาด ${fail})` : ''}`, fail ? 'error' : 'success');
+}
+
+// ══════════════════════════════════════
 // ALL QUOTES (Admin)
 // ══════════════════════════════════════
 let allQuotesData = [], _aqSearch = '';
@@ -1284,7 +1462,7 @@ async function loadAllQuotes() {
 
   const { data, error } = await sb
     .from('quotes')
-    .select('id, partner, customer_name, title, project_name, telephone, quote_date, total_price, discount_pct, user_id, created_at')
+    .select('id, partner, customer_name, title, project_name, telephone, quote_date, total_price, discount_pct, remark, user_id, created_at')
     .order('created_at', { ascending: false });
 
   if (error) { body.innerHTML = `<tr><td colspan="9" class="tbl-empty" style="color:var(--red)">${error.message}</td></tr>`; return; }
@@ -1348,7 +1526,8 @@ async function adminViewQuote(id) {
     <div><span class="badge">Tel</span> ${q.telephone || '—'}</div>
     <div><span class="badge">วันที่</span> ${q.quote_date || '—'}</div>
     <div><span class="badge">ส่วนลด</span> ${q.discount_pct || 0}%</div>
-    <div><span class="badge">ยอดสุทธิ</span> <strong>฿${fmt(net)}</strong></div>`;
+    <div><span class="badge">ยอดสุทธิ</span> <strong>฿${fmt(net)}</strong></div>
+    ${q.remark ? `<div style="flex-basis:100%"><span class="badge">หมายเหตุ</span> ${q.remark}</div>` : ''}`;
   document.getElementById('aqModalBody').innerHTML = rows;
   document.getElementById('aqModal').classList.add('open');
 }
@@ -1604,9 +1783,21 @@ function applyDark() {
 }
 
 // ── TOAST ──
-function showToast(msg, type = '') {
+function showToast(msg, type = '', anchorEl = null) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = 'show' + (type ? ' ' + type : '');
+
+  if (anchorEl) {
+    const r = anchorEl.getBoundingClientRect();
+    t.style.left      = (r.left + r.width / 2) + 'px';
+    t.style.top        = (r.top - 12) + 'px';
+    t.style.right      = 'auto';
+    t.style.bottom     = 'auto';
+    t.style.transform  = 'translate(-50%, -100%)';
+  } else {
+    t.style.left = t.style.top = t.style.right = t.style.bottom = t.style.transform = '';
+  }
+
   clearTimeout(t._t);
   t._t = setTimeout(() => t.className = '', 3200);
 }
@@ -1639,6 +1830,60 @@ async function initCalculator() {
   applyPartnerMode();
   buildCatTabs();
   renderCatalog();
+  maybeRestoreDraft();
+}
+
+// ── DRAFT AUTOSAVE (กันข้อมูลหายตอนกด F5 / ปิดแท็บ) ──
+function _draftKey() { return 'sis_quote_draft_' + (currentUser?.id || ''); }
+
+function saveDraft() {
+  if (!currentUser) return;
+  const draft = {
+    quoteId, quoteItems,
+    qPartner:  document.getElementById('qPartner')?.value  || '',
+    qCustomer: document.getElementById('qCustomer')?.value || '',
+    qProject:  document.getElementById('qProject')?.value  || '',
+    qTitle:    document.getElementById('qTitle')?.value    || '',
+    qTel:      document.getElementById('qTel')?.value      || '',
+    qDate:     document.getElementById('qDate')?.value     || '',
+    qDiscount: document.getElementById('qDiscount')?.value || 0,
+    qRemark:   document.getElementById('qRemark')?.value    || '',
+  };
+  localStorage.setItem(_draftKey(), JSON.stringify(draft));
+}
+
+function clearDraft() {
+  localStorage.removeItem(_draftKey());
+}
+
+let _draftRestored = false;
+
+function maybeRestoreDraft() {
+  if (_draftRestored) return; // กัน initCalculator() ถูกเรียกซ้อนกันแล้วกู้คืนซ้ำ
+  const raw = localStorage.getItem(_draftKey());
+  if (!raw) return;
+  let draft;
+  try { draft = JSON.parse(raw); } catch { clearDraft(); return; }
+  if (!draft?.quoteItems?.length) { clearDraft(); return; }
+  if (quoteItems.length) return; // มีรายการอยู่แล้วในหน้าจอ ไม่ทับ
+
+  _draftRestored = true;
+
+  quoteId    = draft.quoteId || null;
+  quoteItems = draft.quoteItems || [];
+  document.getElementById('qPartner').value  = draft.qPartner  || '';
+  document.getElementById('qCustomer').value = draft.qCustomer || '';
+  document.getElementById('qProject').value  = draft.qProject  || '';
+  document.getElementById('qTitle').value    = draft.qTitle    || '';
+  document.getElementById('qTel').value      = draft.qTel      || '';
+  if (draft.qDate) document.getElementById('qDate').value     = draft.qDate;
+  document.getElementById('qDiscount').value = draft.qDiscount || 0;
+  document.getElementById('qRemark').value    = draft.qRemark  || '';
+
+  markDirty();
+  renderQuote();
+  renderCatalog();
+  showToast('กู้คืนรายการสำเร็จ', 'success');
 }
 
 function applyPartnerMode() {
@@ -1725,7 +1970,7 @@ function addToQuote(productId) {
   const existing = !p.limit_one && quoteItems.find(q => q.product_id === p.id);
   if (existing) { existing.qty++; }
   else {
-    quoteItems.push({ product_id: p.id, part_no: p.part_no, name: p.name, price: p.price, cost: p.cost, qty: 1, limit_one: p.limit_one });
+    quoteItems.push({ product_id: p.id, part_no: p.part_no, name: p.name, price: p.price, cost: p.cost, qty: 1, limit_one: p.limit_one, fixed_price: p.fixed_price || false });
   }
   markDirty();
   renderQuote();
@@ -1738,13 +1983,20 @@ function changeQty(idx, delta) {
   renderQuote();
 }
 
-function setQty(idx, val) {
+function liveQty(idx, val) {
   const n = parseInt(val);
   if (!isNaN(n) && n >= 1) {
     quoteItems[idx].qty = n;
     markDirty();
     calcTotals();
   }
+}
+
+function setQty(idx, val) {
+  const n = parseInt(val);
+  quoteItems[idx].qty = (!isNaN(n) && n >= 1) ? n : 1;
+  markDirty();
+  renderQuote();
 }
 
 function removeItem(idx) {
@@ -1775,7 +2027,7 @@ function renderQuote() {
       <td>
         <div class="qty-ctrl">
           <button class="qty-btn" onclick="changeQty(${i},-1)" ${item.limit_one?'disabled':''}>−</button>
-          <input class="qty-input" type="number" min="1" value="${item.qty}" ${item.limit_one?'disabled':''} onchange="setQty(${i},this.value)" oninput="setQty(${i},this.value)">
+          <input class="qty-input" type="number" min="1" value="${item.qty}" ${item.limit_one?'disabled':''} onchange="setQty(${i},this.value)" oninput="liveQty(${i},this.value)">
           <button class="qty-btn" onclick="changeQty(${i},1)" ${item.limit_one?'disabled':''}>＋</button>
         </div>
       </td>
@@ -1791,20 +2043,44 @@ function renderQuote() {
   calcTotals();
 }
 
+const MIN_GP_PCT   = 15;   // GP ขั้นต่ำที่บังคับ — ถ้า GP สูงกว่านี้อยู่แล้วจะไม่ปรับลง
+const ROUND_TO     = 50;   // ปัดเศษราคารวมขึ้นเป็นหลักนี้
+
+function computeQuoteTotals() {
+  // รายการที่เป็น "ราคาตายตัว" จะไม่ถูกนำไปคำนวณ GP ขั้นต่ำ/ปัดเศษ — บวกกลับเข้าไปแบบเป๊ะๆทีหลัง
+  const normalItems = quoteItems.filter(i => !i.fixed_price);
+  const fixedItems   = quoteItems.filter(i => i.fixed_price);
+
+  const fixedPriceSum = fixedItems.reduce((s, i) => s + i.price * i.qty, 0);
+  const fixedCostSum  = fixedItems.reduce((s, i) => s + i.cost  * i.qty, 0);
+
+  const normalPriceRaw = normalItems.reduce((s, i) => s + i.price * i.qty, 0);
+  const normalCost      = normalItems.reduce((s, i) => s + i.cost  * i.qty, 0);
+  const minGpPrice       = normalCost / (1 - MIN_GP_PCT / 100);
+  const normalPrice      = Math.ceil(Math.max(normalPriceRaw, minGpPrice) / ROUND_TO) * ROUND_TO;
+
+  const totalPriceRaw = normalPriceRaw + fixedPriceSum;
+  const totalCost     = normalCost + fixedCostSum;
+  const totalPrice    = normalPrice + fixedPriceSum;
+
+  const disc    = Math.min(100, Math.max(0, parseFloat(document.getElementById('qDiscount')?.value) || 0));
+  const discAmt = totalPrice * disc / 100;
+  const net     = Math.ceil((normalPrice - normalPrice * disc / 100) / ROUND_TO) * ROUND_TO + fixedPriceSum * (1 - disc / 100);
+  const profit  = net - totalCost;
+  const gp      = net > 0 ? (profit / net * 100) : 0;
+
+  return { totalPriceRaw, totalCost, totalPrice, disc, discAmt, net, profit, gp };
+}
+
 function calcTotals() {
-  const totalPrice = quoteItems.reduce((s, i) => s + i.price * i.qty, 0);
-  const totalCost  = quoteItems.reduce((s, i) => s + i.cost  * i.qty, 0);
-  const disc       = Math.min(100, Math.max(0, parseFloat(document.getElementById('qDiscount').value) || 0));
-  const discAmt    = totalPrice * disc / 100;
-  const net        = totalPrice - discAmt;
-  const profit     = net - totalCost;
-  const gp         = net > 0 ? (profit / net * 100).toFixed(1) : '0.0';
+  const { totalPrice, totalCost, profit, gp, net, discAmt } = computeQuoteTotals();
+  const gpStr = gp.toFixed(1);
 
   document.getElementById('sumPrice').textContent   = '฿' + fmt(totalPrice);
   document.getElementById('sumCost').textContent    = '฿' + fmt(totalCost);
   document.getElementById('sumProfit').textContent  = '฿' + fmt(profit);
-  document.getElementById('sumGP').textContent      = gp + '%';
-  document.getElementById('sumGP').className        = 'sum-value ' + (+gp >= 20 ? 'green' : +gp >= 10 ? '' : 'red');
+  document.getElementById('sumGP').textContent      = gpStr + '%';
+  document.getElementById('sumGP').className        = 'sum-value ' + (gp >= 20 ? 'green' : gp >= 10 ? '' : 'red');
   document.getElementById('netTotal').textContent   = '฿' + fmt(net);
   document.getElementById('discountAmt').textContent = discAmt > 0 ? `(ลด ฿${fmt(discAmt)})` : '';
 }
@@ -1813,6 +2089,7 @@ function calcTotals() {
 function markDirty() {
   quoteDirty = true;
   document.getElementById('dirtyDot').style.display = '';
+  saveDraft();
 }
 
 async function saveQuote() {
@@ -1837,15 +2114,16 @@ async function saveQuote() {
   const title    = document.getElementById('qTitle').value.trim() || 'Quote ' + new Date().toLocaleDateString('th-TH');
   const date     = document.getElementById('qDate').value;
   const discount = parseFloat(document.getElementById('qDiscount').value) || 0;
-  const total    = quoteItems.reduce((s, i) => s + i.price * i.qty, 0);
+  const total    = computeQuoteTotals().totalPrice;
   const partner  = document.getElementById('qPartner').value.trim();
   const project  = document.getElementById('qProject').value.trim();
   const tel      = document.getElementById('qTel').value.trim();
+  const remark   = document.getElementById('qRemark').value.trim();
 
   const btn = document.getElementById('saveQuoteBtn');
   btn.disabled = true;
 
-  const payload = { customer_name: customer, title, quote_date: date, discount_pct: discount, total_price: total, partner, project_name: project, telephone: tel };
+  const payload = { customer_name: customer, title, quote_date: date, discount_pct: discount, total_price: total, partner, project_name: project, telephone: tel, remark };
 
   let qid = quoteId;
   if (qid) {
@@ -1865,6 +2143,7 @@ async function saveQuote() {
 
   quoteDirty = false;
   document.getElementById('dirtyDot').style.display = 'none';
+  clearDraft();
   btn.disabled = false;
   showToast('บันทึก Quote สำเร็จ ✓', 'success');
 }
@@ -1901,6 +2180,7 @@ async function loadQuote(id) {
   quoteId = id;
   quoteDirty = false;
   document.getElementById('dirtyDot').style.display = 'none';
+  clearDraft();
   document.getElementById('qCustomer').value = q.customer_name || '';
   document.getElementById('qTitle').value    = q.title || '';
   document.getElementById('qDate').value     = q.quote_date || '';
@@ -1908,10 +2188,11 @@ async function loadQuote(id) {
   document.getElementById('qPartner').value  = q.partner || '';
   document.getElementById('qProject').value  = q.project_name || '';
   document.getElementById('qTel').value      = q.telephone || '';
+  document.getElementById('qRemark').value   = q.remark || '';
 
   quoteItems = (items || []).map(i => {
     const prod = catalogData.find(p => p.part_no === i.part_no) || {};
-    return { product_id: prod.id || null, part_no: i.part_no, name: i.name, price: parseFloat(i.price) || 0, cost: parseFloat(i.cost) || 0, qty: parseInt(i.qty) || 1, limit_one: prod.limit_one || false };
+    return { product_id: prod.id || null, part_no: i.part_no, name: i.name, price: parseFloat(i.price) || 0, cost: parseFloat(i.cost) || 0, qty: parseInt(i.qty) || 1, limit_one: prod.limit_one || false, fixed_price: prod.fixed_price || false };
   });
 
   renderQuote();
@@ -1948,11 +2229,16 @@ function newQuote() {
 
 function clearQuote() {
   quoteId = null; quoteDirty = false; quoteItems = [];
+  document.getElementById('qPartner').value  = '';
   document.getElementById('qCustomer').value = '';
+  document.getElementById('qProject').value  = '';
   document.getElementById('qTitle').value    = '';
+  document.getElementById('qTel').value      = '';
   document.getElementById('qDate').value     = new Date().toISOString().slice(0,10);
   document.getElementById('qDiscount').value = 0;
+  document.getElementById('qRemark').value   = '';
   document.getElementById('dirtyDot').style.display = 'none';
+  clearDraft();
   renderQuote();
   renderCatalog();
 }
@@ -1962,6 +2248,7 @@ function printQuote() {
   const quoteName = document.getElementById('qTitle')?.value || '';
   const date = document.getElementById('qDate')?.value || '';
   const disc = parseFloat(document.getElementById('qDiscount')?.value) || 0;
+  const remark = document.getElementById('qRemark')?.value.trim() || '';
 
   const rows = quoteItems.map((item, i) => {
     const ext = item.price * item.qty;
@@ -1975,9 +2262,7 @@ function printQuote() {
     </tr>`;
   }).join('');
 
-  const totalPrice = quoteItems.reduce((s, i) => s + i.price * i.qty, 0);
-  const discAmt = totalPrice * disc / 100;
-  const net = totalPrice - discAmt;
+  const { totalPrice, discAmt, net } = computeQuoteTotals();
 
   const win = window.open('', '_blank');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
@@ -1994,7 +2279,7 @@ function printQuote() {
     .total-row td { font-size: 15px; color: #1a3c6b; }
     @media print { body { margin: 16px; } }
   </style></head><body>
-  <h2>SiS Cloud – Price Calculator</h2>
+  <h2>SiS Cloud – Pricing Calculator</h2>
   <div class="meta">
     ${customer ? `<span>ลูกค้า: <b>${customer}</b></span>` : ''}
     ${quoteName ? `<span>Quote: <b>${quoteName}</b></span>` : ''}
@@ -2014,6 +2299,7 @@ function printQuote() {
       <tr class="foot total-row"><td colspan="5" style="text-align:right">ยอดสุทธิ / เดือน</td><td style="text-align:right">฿${fmt(net)}</td></tr>
     </tfoot>
   </table>
+  ${remark ? `<div style="margin-top:18px;font-size:12px"><b>หมายเหตุ:</b><br>${remark.replace(/\n/g, '<br>')}</div>` : ''}
   </body></html>`);
   win.document.close();
   win.focus();
